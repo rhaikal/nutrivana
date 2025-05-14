@@ -71,11 +71,23 @@ CREATE TABLE user_minimum_nutritions (
 );
 
 CREATE OR REPLACE VIEW food_beverages AS
+WITH
+    ingredient_agg AS (
+        SELECT
+            fi.f_id,
+            array_agg (i.id) AS i_ids,
+            array_agg (i.name) AS i_names
+        FROM
+            food_ingredients fi
+            JOIN ingredients i ON i.id = fi.i_id
+        GROUP BY
+            fi.f_id
+    )
 SELECT
     f.id AS f_id,
     f.name AS f_name,
-    array_agg (i.id) AS i_ids,
-    array_agg (i.name) AS i_names,
+    ia.i_ids,
+    ia.i_names,
     MAX(
         CASE
             WHEN n.name = 'Calcium' THEN "fn".value
@@ -108,10 +120,11 @@ SELECT
     ) AS protein
 FROM
     foods f
-    JOIN food_ingredients fi ON fi.f_id = f.id
-    JOIN ingredients i ON i.id = fi.i_id
+    JOIN ingredient_agg ia ON ia.f_id = f.id
     JOIN food_nutritions fn ON fn.f_id = f.id
     JOIN nutritions n ON n.id = fn.n_id
 GROUP BY
     f.id,
-    f.name;
+    f.name,
+    ia.i_ids,
+    ia.i_names;
