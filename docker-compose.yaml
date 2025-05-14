@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:17.4
+    environment:
+      POSTGRES_USER: nutrivana
+      POSTGRES_PASSWORD: nutrivana
+      POSTGRES_DB: nutrivana
+    volumes:
+      - ./database/postgres:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "nutrivana"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    ports:
+      - 5433:5432
+    restart: always
