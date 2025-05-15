@@ -45,6 +45,7 @@ CREATE TABLE food_ingredients (
     id SERIAL PRIMARY KEY,
     f_id INT NOT NULL,
     i_id INT NOT NULL,
+    weight FLOAT NOT NULL,
     FOREIGN KEY (f_id) REFERENCES foods (id),
     FOREIGN KEY (i_id) REFERENCES ingredients (id),
     UNIQUE (f_id, i_id)
