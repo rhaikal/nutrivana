@@ -6,7 +6,6 @@ services:
       POSTGRES_PASSWORD: nutrivana
       POSTGRES_DB: nutrivana
     volumes:
-      - ./database/postgres:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "nutrivana"]
