@@ -21,7 +21,7 @@ CREATE TABLE users (
     date_of_birth DATE,
     weight INT,
     height INT,
-    nutrition_status VARCHAR(10) CHECK (
+    nutrition_status VARCHAR(50) CHECK (
         nutrition_status IN (
             'severely low',
             'low',
