@@ -1,24 +1,47 @@
-export const FoodItem = ({ food, onClick }) => {
-  return (
-    <li className="list-row items-center-safe justify-between border-2 border-base-200 cursor-pointer hover:bg-base-300" onClick={onClick}>
-      <div>
-        <div className="badge badge-soft badge-info !border-blue-300 !rounded-box">{food.name}</div>
-        <div className="flex gap-2 pt-2 text-accent text-sm opacity-60">
-          <span>Energy: {food.energy}</span>
-          -
-          <span>Protein: {food.protein}</span>
-          -
-          <span>Total Fat: {food.fat}</span>
-          -
-          <span>Carbohydrate: {food.carbohydrate}</span>
-          -
-          <span>Calcium: {food.calcium}</span>
-          -
-          <span>Iron: {food.iron}</span>
+import PropTypes from 'prop-types';
+
+export const FoodItem = ({ food, onClick, isLoading }) => {
+  return ( isLoading ? 
+      <div className="skeleton min-h-[105.5px]" />
+    :
+      <li className="list-row items-center-safe justify-between border-2 border-base-200 cursor-pointer hover:bg-base-300" onClick={onClick}>
+        <div>
+          <div className="badge badge-soft badge-info !border-blue-300 !rounded-box">{food.name}</div>
+          <div className="flex gap-2 pt-2 text-accent text-sm opacity-60">
+            <span>Energy: {food.energy}</span>
+            -
+            <span>Protein: {food.protein}</span>
+            -
+            <span>Total Fat: {food.fat}</span>
+            -
+            <span>Carbohydrate: {food.carbohydrate}</span>
+            -
+            <span>Calcium: {food.calcium}</span>
+            -
+            <span>Iron: {food.iron}</span>
+          </div>
         </div>
-      </div>
-    </li>
+      </li>
   );
+};
+
+FoodItem.propTypes = {
+  food: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    energy: PropTypes.number.isRequired,
+    protein: PropTypes.number.isRequired,
+    fat: PropTypes.number.isRequired,
+    carbohydrate: PropTypes.number.isRequired,
+    calcium: PropTypes.number.isRequired,
+    iron: PropTypes.number.isRequired
+  }).isRequired,
+  onClick: PropTypes.func,
+  isLoading: PropTypes.bool
+};
+
+FoodItem.defaultProps = {
+  onClick: () => {},
+  isLoading: false
 };
 
 export const FoodItemInput = ({ food, checked, onChange }) => {
@@ -45,10 +68,33 @@ export const FoodItemInput = ({ food, checked, onChange }) => {
   );
 };
 
+FoodItemInput.propTypes = {
+  food: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    energy: PropTypes.number.isRequired,
+    protein: PropTypes.number.isRequired,
+    fat: PropTypes.number.isRequired,
+    carbohydrate: PropTypes.number.isRequired,
+    calcium: PropTypes.number.isRequired,
+    iron: PropTypes.number.isRequired
+  }).isRequired,
+  checked: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired
+};
+
 export const FoodList = ({ children, className }) => {
   return (
     <ul className={`list bg-base-100 rounded-box w-full ${className}`}>
       {children}
     </ul>
   );
+};
+
+FoodList.propTypes = {
+  children: PropTypes.node.isRequired,
+  className: PropTypes.string
+};
+
+FoodList.defaultProps = {
+  className: ''
 };

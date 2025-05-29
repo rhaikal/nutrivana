@@ -1,7 +1,8 @@
+import PropTypes from 'prop-types';
 import { useContext } from "react";
 import UserContext from "../../../contexts/UserContext";
 
-const NutritionStatus = () => {
+const NutritionStatus = ({isLoading}) => {
     const { user } = useContext(UserContext);
     
     const status = {
@@ -15,12 +16,20 @@ const NutritionStatus = () => {
 
     const currentStatus = status[user?.nutrition_status?.toLowerCase()] ?? status['no status'];    
     return (
-        <div className="card bg-base-100 shadow-sm card-xl rounded-box p-3">
-            <div className={`card-body items-center text-center ${currentStatus.bgColor} justify-center-safe`}>
-                <h1 className={`card-title text-4xl font-extrabold ${currentStatus.textColor}`}>{currentStatus.label}</h1>
+        <div className="card bg-base-100 shadow-sm card-xl rounded-box p-3">    
+            <div className={`${isLoading ? 'skeleton' : currentStatus.bgColor} card-body items-center text-center justify-center-safe`}>
+                <h1 className={`${isLoading ? 'invisible' : currentStatus.textColor} card-title text-4xl font-extrabold`}>{currentStatus.label}</h1>
             </div>
         </div>
     );
+};
+
+NutritionStatus.propTypes = {
+    isLoading: PropTypes.bool
+};
+
+NutritionStatus.defaultProps = {
+    isLoading: false
 };
 
 export default NutritionStatus;

@@ -21,7 +21,9 @@ const CustomStats = ({ label, value, minimum }) => {
                         {parseFloat(percentage).toFixed(1)}
                     </div>
                 </div>
-                <div className="stat-title text-lg font-extrabold">{label}</div>
+                
+                <div className='stat-title text-lg font-extrabold'>{label}</div>
+                
                 <div className="stat-value">{value}<span className="text-sm">/{minimum}</span></div>
             </div>
         </div>
@@ -33,7 +35,7 @@ CustomStats.propTypes = {
     minimum: PropTypes.number.isRequired
 }
 
-const NutritionIntake = ({intake, minimum, className}) => {
+const NutritionIntake = ({intake, minimum, className, isLoading}) => {
     const nutrients = [
         { label: 'Energy', prop: 'energy' },
         { label: 'Protein', prop: 'protein' },
@@ -46,12 +48,15 @@ const NutritionIntake = ({intake, minimum, className}) => {
     return (
         <div className={`card bg-base-100 card-border border-base-200 grid grid-flow-col grid-rows-6 sm:grid-rows-2 ${className}`}>
             {nutrients.map((nutrient) => (
-                <CustomStats
-                    key={nutrient.prop}
-                    label={nutrient.label}
-                    value={intake[nutrient.prop]}
-                    minimum={minimum[nutrient.prop]}
-                />
+                isLoading ? 
+                    <div className='skeleton m-2' />
+                :
+                    <CustomStats
+                        key={nutrient.prop}
+                        label={nutrient.label}
+                        value={intake[nutrient.prop]}
+                        minimum={minimum[nutrient.prop]}
+                    />
             ))}
         </div>
     )
@@ -60,13 +65,15 @@ const NutritionIntake = ({intake, minimum, className}) => {
 NutritionIntake.propTypes = {
     intake: PropTypes.objectOf(PropTypes.number),
     minimum: PropTypes.objectOf(PropTypes.number),
-    className: PropTypes.string
+    className: PropTypes.string,
+    isLoading: PropTypes.bool
 }
 
 NutritionIntake.defaultProps = {
     intake: initialNutrition,
     minimum: initialNutrition,
-    className: ''
+    className: '',
+    isLoading: false
 }
 
 export default NutritionIntake;

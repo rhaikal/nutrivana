@@ -33,6 +33,6 @@
 
 body {
     background-color: color-mix(in oklab, #8bc34a 20%, transparent);
-    width: 100vw;
-    height: 100vh;
+    min-width: 100vw;
+    min-height: 100vh;
 }
