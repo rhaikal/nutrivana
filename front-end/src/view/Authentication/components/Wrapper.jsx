@@ -7,7 +7,7 @@ const Wrapper = ({children}) => {
                 <div className='lg:w-1/2 flex items-center justify-center px-5' style={{ backgroundColor: 'color-mix(in oklab, #8bc34a 40%, transparent)' }}>
                     <figure>
                         <img 
-                            src='desain.png'
+                            src='authentication.png'
                             alt="Login Illustration"
                             style={{ height: 'unset', objectFit: 'unset' }}
                         />

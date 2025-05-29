@@ -1,117 +1,246 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom';
-import { EyeIcon, EyeSlashIcon, KeyIcon, UserIcon } from "@heroicons/react/24/solid"
+import { useState, useRef, useEffect } from 'react';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import { UserIcon, KeyIcon } from '@heroicons/react/24/solid';
+import Swal from '../../utils/Swal';
 import Wrapper from './components/Wrapper';
+import AuthModule from '../../modules/AuthModule';
+import FormField from './components/FormField';
+import SelectField from './components/SelectField';
+import { Link } from 'react-router-dom';
 
 const Register = () => {
-    const navigate = useNavigate();
-    const [showPassword, setShowPassword] = useState(false);
     const [step, setStep] = useState(0);
     const [contentHeight, setContentHeight] = useState('auto');
-    const containerRef = useRef(null);
     const step1Ref = useRef(null);
     const step2Ref = useRef(null);
 
-    const handleNext = (e) => {
-        e.preventDefault();
-        setStep(1);
-    };
+    const step1ValidationSchema = Yup.object({
+        username: Yup.string()
+            .min(3, 'Username must be at least 3 characters')
+            .required('Username is required'),
+        password: Yup.string()
+            .min(6, 'Password must be at least 6 characters')
+            .required('Password is required'),
+        confirm_password: Yup.string()
+            .oneOf([Yup.ref('password')], 'Passwords must match')
+            .required('Confirm Password is required')
+    });
 
-    const handleBack = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setStep(0);
-    };
+    const validationSchema = step1ValidationSchema.concat(
+        Yup.object({
+            weight: Yup.number()
+                .positive('Weight must be positive')
+                .required('Weight is required'),
+            height: Yup.number()
+                .positive('Height must be positive')
+                .required('Height is required'),
+            date_of_birth: Yup.date()
+                .required('Date of birth is required'),
+            gender: Yup.string()
+                .required('Gender is required')
+        }
+    ));
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        console.log("Form submitted");
-        navigate('/');
-    };
+    const formik = useFormik({
+        initialValues: {
+            username: '',
+            password: '',
+            confirm_password: '',
+            weight: '',
+            height: '',
+            date_of_birth: '',
+            gender: ''
+        },
+        validationSchema: validationSchema,
+        onSubmit: handleSubmit
+    });
 
     useEffect(() => {
-        if (step === 0) {
+        if (step === 0 && step1Ref.current) {
             setContentHeight(`${step1Ref.current.offsetHeight}px`);
-        } else {
+        } else if (step === 1 && step2Ref.current) {
             setContentHeight(`${step2Ref.current.offsetHeight}px`);
         }
-    }, [step]);
+    }, [step, formik.errors, formik.touched]);
+
+    function handleNext(e) {
+        e.preventDefault();
+        const errors = {};
+        try {
+            step1ValidationSchema.validateSync(
+                { 
+                    username: formik.values.username, 
+                    password: formik.values.password, 
+                    confirm_password: formik.values.confirm_password 
+                },
+                { abortEarly: false }
+            );
+            setStep(1);
+        } catch (validationErrors) {
+            validationErrors.inner.forEach(error => {
+                errors[error.path] = error.message;
+            });
+            formik.setErrors({ ...formik.errors, ...errors });
+        }
+    }
+
+    function handleBack(e) {
+        e.preventDefault();
+        setStep(0);
+    }
+
+    function handleSubmit(data) {
+        Swal.fire({
+            title: 'Confirm Registration',
+            text: 'Please confirm that all your information is correct before proceeding',
+            icon: 'warning',            
+            showCancelButton: true,
+            confirmButtonText: 'Yes',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                AuthModule.register(data).then((response) => {
+                    localStorage.setItem('access_token', response.access_token);
+                    window.location.reload();
+                }).catch(() => {
+                    Swal.fire({
+                        title: 'Registration Failed',
+                        text: 'Unable to complete registration. Please try again.',
+                        icon: 'error',
+                    });
+                });
+            }
+        });
+    }
+
+    const genderOptions = [
+        { value: 'l', label: 'Male' },
+        { value: 'p', label: 'Female' }
+    ];
 
     return (
         <Wrapper>
             <div>
                 <h3 className="text-xl font-semibold text-center mb-6">Register new account</h3>
 
-                <form noValidate className="flex flex-col justify-around gap-4" onSubmit={handleSubmit}>               
+                <form noValidate className="flex flex-col justify-around gap-4" onSubmit={formik.handleSubmit}>
                     <div 
-                        ref={containerRef}
                         className="relative overflow-hidden transition-all duration-500 ease-in-out pe-2"
                         style={{ height: contentHeight }}
                     >
-                        <div ref={step1Ref} className={`transition-all duration-500 ease-in-out ${step === 0 ? 'translate-x-1 opacity-100' : '-translate-x-full opacity-0 absolute'}`}>
-                            <fieldset className="fieldset">
-                                <legend className="fieldset-legend">Username</legend>
-                                <label className="input input-bordered w-full max-w-none items-center gap-2">
-                                    <UserIcon className="h-4 w-4 opacity-70" />
-                                    <input type="text" className="w-full" />
-                                </label>
-                            </fieldset>
-                            
-                            <fieldset className="fieldset">
-                                <legend className="fieldset-legend">Password</legend>
-                                <label class="input input-bordered w-full max-w-none items-center gap-2 join-item">
-                                    <KeyIcon className="h-4 w-4 opacity-70" />
-                                    <input type={showPassword ? "text" : "password"} class="grow" />
-                                    <label className="swap">
-                                        <input type="checkbox" onClick={() => setShowPassword(!showPassword)} />
-                                        <div className="swap-on"><EyeSlashIcon className="h-4 w-4 opacity-70" /></div>
-                                        <div className="swap-off"><EyeIcon className="h-4 w-4 opacity-70" /></div>
-                                    </label>
-                                </label>
-                            </fieldset>
+                        <div 
+                            ref={step1Ref}
+                            className={`transition-all duration-500 ease-in-out ${
+                                step === 0 ? 'translate-x-1 opacity-100' : '-translate-x-full opacity-0 absolute'
+                            }`}
+                        >
+                            <FormField
+                                label="Username"
+                                name="username"
+                                value={formik.values.username}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                error={formik.errors.username}
+                                touched={formik.touched.username}
+                                icon={UserIcon}
+                            />
+
+                            <FormField
+                                label="Password"
+                                name="password"
+                                type="password"
+                                value={formik.values.password}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                error={formik.errors.password}
+                                touched={formik.touched.password}
+                                icon={KeyIcon}
+                            />
+
+                            <FormField
+                                label="Confirm Password"
+                                name="confirm_password"
+                                type="password"
+                                value={formik.values.confirm_password}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                error={formik.errors.confirm_password}
+                                touched={formik.touched.confirm_password}
+                                icon={KeyIcon}
+                            />
                         </div>
-                        <div ref={step2Ref} className={`transition-all duration-500 ease-in-out ${step === 1 ? 'translate-x-1 opacity-100' : 'translate-x-full opacity-0 absolute'}`}>
-                            <fieldset className="fieldset">
-                                <legend className="fieldset-legend">Weight</legend>
-                                <label className="input input-bordered w-full max-w-none items-center gap-2">
-                                    <input type="number" className="grow" />
-                                </label>
-                            </fieldset>
-                            <fieldset className="fieldset">
-                                <legend className="fieldset-legend">Height</legend>
-                                <label className="input input-bordered w-full max-w-none items-center gap-2">
-                                    <input type="number" className="grow" />
-                                </label>
-                            </fieldset>
-                            <fieldset className="fieldset">
-                                <legend className="fieldset-legend">Gender</legend>
-                                <select defaultValue="Gender" className="select w-full max-w-none">
-                                    <option>Male</option>
-                                    <option>Female</option>
-                                </select>
-                            </fieldset>
-                            <fieldset className="fieldset">
-                                <legend className="fieldset-legend">Date of Birth</legend>
-                                <label className="input input-bordered w-full max-w-none items-center gap-2">
-                                    <input type="date" className="grow" />
-                                </label>
-                            </fieldset>
-                        </div> 
-                    </div>                    
+
+                        <div 
+                            ref={step2Ref}
+                            className={`transition-all duration-500 ease-in-out ${
+                                step === 1 ? 'translate-x-1 opacity-100' : 'translate-x-full opacity-0 absolute'
+                            }`}
+                        >
+                            <FormField
+                                label="Weight"
+                                name="weight"
+                                type="number"
+                                value={formik.values.weight}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                error={formik.errors.weight}
+                                touched={formik.touched.weight}
+                            />
+
+                            <FormField
+                                label="Height"
+                                name="height"
+                                type="number"
+                                value={formik.values.height}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                error={formik.errors.height}
+                                touched={formik.touched.height}
+                            />
+
+                            <SelectField
+                                label="Gender"
+                                name="gender"
+                                value={formik.values.gender}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                error={formik.errors.gender}
+                                touched={formik.touched.gender}
+                                options={genderOptions}
+                            />
+
+                            <FormField
+                                label="Date of Birth"
+                                name="date_of_birth"
+                                type="date"
+                                value={formik.values.date_of_birth}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                error={formik.errors.date_of_birth}
+                                touched={formik.touched.date_of_birth}
+                            />
+                        </div>
+                    </div>
+
                     <div className="flex flex-col space-y-4 pt-4">
                         {step === 1 && (
                             <button type="button" onClick={handleBack} className="btn btn-outline border border-base-300 w-full">
                                 Back
                             </button>
                         )}
-                        <button type="submit" onClick={(e) => step === 0 ? handleNext(e) : handleSubmit(e)} className="btn btn-primary w-full">
+                        <button
+                            type="button"
+                            onClick={step === 0 ? handleNext : formik.handleSubmit}
+                            className="btn btn-primary w-full"
+                        >
                             {step === 0 ? 'Next' : 'Register'}
                         </button>
-                    </div>                
+                    </div>
                 </form>
+
                 <div className="text-center mt-6">
                     <p className="text-sm">
-                        Already have an account?{' '}                    
+                        Already have an account?{' '}
                         <Link to="/login" className="link link-primary">
                             Login
                         </Link>
@@ -119,7 +248,7 @@ const Register = () => {
                 </div>
             </div>
         </Wrapper>
-    )
-}
+    );
+};
 
 export default Register;
