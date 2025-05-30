@@ -77,8 +77,14 @@ WITH
     ingredient_agg AS (
         SELECT
             fi.f_id,
-            array_agg (i.id) AS i_ids,
-            array_agg (i.name) AS i_names
+            string_agg(i.id::text, ', ') AS i_ids,
+            string_agg(
+                regexp_replace(
+                    lower(trim(i.name)),
+                    '[,\s]+', '_', 'g'
+                ), 
+                ', '
+            ) AS i_names
         FROM
             food_ingredients fi
             JOIN ingredients i ON i.id = fi.i_id
@@ -92,32 +98,32 @@ SELECT
     ia.i_names,
     MAX(
         CASE
-            WHEN n.name = 'Calcium' THEN "fn".value
+            WHEN n.name = 'Calcium' THEN fn.value
         END
     ) AS calcium,
     MAX(
         CASE
-            WHEN n.name = 'Carbohydrate' THEN "fn".value
+            WHEN n.name = 'Carbohydrate' THEN fn.value
         END
     ) AS carbohydrate,
     MAX(
         CASE
-            WHEN n.name = 'Energy' THEN "fn".value
+            WHEN n.name = 'Energy' THEN fn.value
         END
     ) AS energy,
     MAX(
         CASE
-            WHEN n.name = 'Total Fat' THEN "fn".value
+            WHEN n.name = 'Total Fat' THEN fn.value
         END
     ) AS fat,
     MAX(
         CASE
-            WHEN n.name = 'Iron' THEN "fn".value
+            WHEN n.name = 'Iron' THEN fn.value
         END
     ) AS iron,
     MAX(
         CASE
-            WHEN n.name = 'Protein' THEN "fn".value
+            WHEN n.name = 'Protein' THEN fn.value
         END
     ) AS protein
 FROM
