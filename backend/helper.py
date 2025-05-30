@@ -25,7 +25,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 NUTRITION_RULES = {
-        "Gizi buruk (severely wasted)": {
+        "severely low": {
             "prioritas": ["Calcium", "Carbohydrate", "Energy", "Iron", "Protein", "Total Fat"],
             "faktor": {
                 "Energy": 1.4,  # 40% more energy
@@ -34,7 +34,7 @@ NUTRITION_RULES = {
                 "default": 1.0  # No adjustment for others
             }
         },
-        "Gizi kurang (wasted)": {
+        "low": {
             "prioritas": ["Calcium", "Carbohydrate", "Energy", "Iron", "Protein", "Total Fat"],
             "faktor": {
                 "Energy": 1.2,  # 20% more energy
@@ -42,7 +42,7 @@ NUTRITION_RULES = {
                 "default": 1.0  # No adjustment for others
             }
         },
-        "Gizi baik (normal)": {
+        "good": {
             "prioritas": ["Calcium", "Carbohydrate", "Energy", "Iron", "Protein", "Total Fat"],
             "faktor": {
                 "Protein": 1.0,  # 10% more protein
@@ -50,7 +50,7 @@ NUTRITION_RULES = {
                 "default": 1.0  # No adjustment for others
             }
         },
-        "Berisiko gizi lebih (possible risk of overweight)": {
+        "possible risk of excessive": {
             "prioritas": ["Calcium", "Carbohydrate", "Energy", "Iron", "Protein", "Total Fat"],
             "faktor": {
                 "Total Fat": 0.85,  # 15% less fat
@@ -58,7 +58,7 @@ NUTRITION_RULES = {
                 "default": 1.0  # No adjustment for others
             }
         },
-        "Gizi lebih (overweight)": {
+        "excessive": {
             "prioritas": ["Calcium", "Carbohydrate", "Energy", "Iron", "Protein", "Total Fat"],
             "faktor": {
                 "Total Fat": 0.8,  # 20% less fat
@@ -66,7 +66,7 @@ NUTRITION_RULES = {
                 "default": 1.0  # No adjustment for others
             }
         },
-        "Obesitas (obese)": {
+        "obese": {
             "prioritas": ["Calcium", "Carbohydrate", "Energy", "Iron", "Protein", "Total Fat"],
             "faktor": {
                 "Total Fat": 0.7,  # 30% less fat
@@ -107,16 +107,16 @@ def calculate_nutrition_status(age_months: int, gender: str, height_cm: float, w
     z_scores = load_who_zscores(age_months, gender, height_cm)
     
     if weight_kg < z_scores['SD-3']:
-        return "Gizi buruk (severely wasted)"
+        return "severely low"
     elif weight_kg < z_scores['SD-2']:
-        return "Gizi kurang (wasted)"
+        return "low"
     elif weight_kg <= z_scores['SD+1']:
-        return "Gizi baik (normal)"
+        return "good"
     elif weight_kg <= z_scores['SD+2']:
-        return "Berisiko gizi lebih (possible risk of overweight)"
+        return "possible risk of excessive"
     elif weight_kg <= z_scores['SD+3']:
-        return "Gizi lebih (overweight)"
-    return "Obesitas (obese)"
+        return "excessive"
+    return "obese"
 
 def calculate_minimum_nutrition(age_months: int, status: str) -> dict:
     """Calculate daily nutritional needs based on age and status"""

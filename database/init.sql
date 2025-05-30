@@ -27,7 +27,8 @@ CREATE TABLE users (
             'low',
             'excessive',
             'possible risk of excessive',
-            'good'
+            'good',
+            'obese'
         )
     )
 );
