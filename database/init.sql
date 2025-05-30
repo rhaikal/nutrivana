@@ -5584,12 +5584,12 @@ VALUES (
 -- Nutritions Data
 INSERT INTO
     public.nutritions (name)
-VALUES ('Calcium'),
-    ('Carbohydrate'),
-    ('Energy'),
-    ('Iron'),
-    ('Protein'),
-    ('Total Fat');
+VALUES ('calcium'),
+    ('carbohydrate'),
+    ('energy'),
+    ('iron'),
+    ('protein'),
+    ('fat');
 
 -- Food Ingredients Data
 INSERT INTO
