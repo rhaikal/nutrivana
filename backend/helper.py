@@ -2,6 +2,10 @@ from core.core import pwd_context, SECRET_KEY, ALGORITHM
 from datetime import datetime, timedelta, timezone
 import jwt
 import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from Model import Ingredients
+from core.core import db
+
 
 # ======================
 # Helper Functions
@@ -26,7 +30,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 
 NUTRITION_RULES = {
         "severely low": {
-            "prioritas": ["Calcium", "Carbohydrate", "Energy", "Iron", "Protein", "Total Fat"],
+            "prioritas": ["calcium", "carbohydrate", "energy", "iron", "protein", "fat"],
             "faktor": {
                 "Energy": 1.4,  # 40% more energy
                 "Protein": 1.5,  # 50% more protein
@@ -35,7 +39,7 @@ NUTRITION_RULES = {
             }
         },
         "low": {
-            "prioritas": ["Calcium", "Carbohydrate", "Energy", "Iron", "Protein", "Total Fat"],
+            "prioritas": ["calcium", "carbohydrate", "energy", "iron", "protein", "fat"],
             "faktor": {
                 "Energy": 1.2,  # 20% more energy
                 "Protein": 1.3,  # 30% more protein
@@ -43,7 +47,7 @@ NUTRITION_RULES = {
             }
         },
         "good": {
-            "prioritas": ["Calcium", "Carbohydrate", "Energy", "Iron", "Protein", "Total Fat"],
+            "prioritas": ["calcium", "carbohydrate", "energy", "iron", "protein", "fat"],
             "faktor": {
                 "Protein": 1.0,  # 10% more protein
                 "Calcium": 1.0,  # 10% more calcium
@@ -51,7 +55,7 @@ NUTRITION_RULES = {
             }
         },
         "possible risk of excessive": {
-            "prioritas": ["Calcium", "Carbohydrate", "Energy", "Iron", "Protein", "Total Fat"],
+            "prioritas": ["calcium", "carbohydrate", "energy", "iron", "protein", "fat"],
             "faktor": {
                 "Total Fat": 0.85,  # 15% less fat
                 "Carbohydrate": 0.9,  # 10% less carbs
@@ -59,7 +63,7 @@ NUTRITION_RULES = {
             }
         },
         "excessive": {
-            "prioritas": ["Calcium", "Carbohydrate", "Energy", "Iron", "Protein", "Total Fat"],
+            "prioritas": ["calcium", "carbohydrate", "energy", "iron", "protein", "fat"],
             "faktor": {
                 "Total Fat": 0.8,  # 20% less fat
                 "Carbohydrate": 0.85,  # 15% less carbs
@@ -67,7 +71,7 @@ NUTRITION_RULES = {
             }
         },
         "obese": {
-            "prioritas": ["Calcium", "Carbohydrate", "Energy", "Iron", "Protein", "Total Fat"],
+            "prioritas": ["calcium", "carbohydrate", "energy", "iron", "protein", "fat"],
             "faktor": {
                 "Total Fat": 0.7,  # 30% less fat
                 "Carbohydrate": 0.8,  # 20% less carbs
@@ -122,36 +126,36 @@ def calculate_minimum_nutrition(age_months: int, status: str) -> dict:
     """Calculate daily nutritional needs based on age and status"""
     base_needs = {
         "0-5": {
-            "Calcium": 200,  # mg
-            "Carbohydrate": 59,  # g
-            "Energy": 550,  # kcal
-            "Iron": 0.3,  # mg
-            "Protein": 9,  # g
-            "Total Fat": 31  # g
+            "calcium": 200,  # mg
+            "carbohydrate": 59,  # g
+            "energy": 550,  # kcal
+            "iron": 0.3,  # mg
+            "protein": 9,  # g
+            "fat": 31  # g
         },
         "6-11": {
-            "Calcium": 270,
-            "Carbohydrate": 105,
-            "Energy": 800,
-            "Iron": 11,
-            "Protein": 15,
-            "Total Fat": 35
+            "calcium": 270,
+            "carbohydrate": 105,
+            "energy": 800,
+            "iron": 11,
+            "protein": 15,
+            "fat": 35
         },
         "12-36": {
-            "Calcium": 650,
-            "Carbohydrate": 215,
-            "Energy": 1350,
-            "Iron": 7,
-            "Protein": 20,
-            "Total Fat": 45
+            "calcium": 650,
+            "carbohydrate": 215,
+            "energy": 1350,
+            "iron": 7,
+            "protein": 20,
+            "fat": 45
         },
         "37-60": {
-            "Calcium": 1000,
-            "Carbohydrate": 220,
-            "Energy": 1400,
-            "Iron": 10,
-            "Protein": 25,
-            "Total Fat": 50
+            "calcium": 1000,
+            "carbohydrate": 220,
+            "energy": 1400,
+            "iron": 10,
+            "protein": 25,
+            "fat": 50
         }
     }
     
@@ -172,3 +176,11 @@ def calculate_minimum_nutrition(age_months: int, status: str) -> dict:
         needs[nutrient] *= adjustment
     
     return needs
+
+NUTRITION_FEATURES = ["calcium", "carbohydrate", "energy", "iron", "protein", "fat"]
+
+vectorizer = TfidfVectorizer()
+ingredients = db.query(Ingredients).all()
+ingredients = [ingredient.name for ingredient in ingredients]
+
+INGREDIENT_VECTORIZED = vectorizer.fit_transform(ingredients)
