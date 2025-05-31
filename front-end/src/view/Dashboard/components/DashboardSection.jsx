@@ -9,7 +9,7 @@ const DashboardSection = ({ children, className, title, action }) => {
           {action && <div className="card-actions">{action}</div>}
         </div>
       )}
-      <div className="card-body p-1">
+      <div className={`card-body p-1 ${!title ? "place-content-center" : ""}`}>
         {children}
       </div>
     </div>

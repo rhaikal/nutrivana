@@ -21,6 +21,7 @@ import GrowthModal from "./components/GrowthModal";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import DashboardSection from "./components/DashboardSection";
 import UserContext from "../../contexts/UserContext";
+import FoodModule from "../../modules/FoodModule";
 
 ChartJS.register(
   CategoryScale,
@@ -78,62 +79,64 @@ const Dashboard = () => {
         window.location.reload();
     }
 
+    const fetchEatenFoods = async () => {
+        return FoodModule.getEatenFoods()
+            .then((response) => {
+                setEatenFoods(response);
+            })
+            .catch((error) => {
+                console.error('Error fetching eaten foods:', error);
+            });
+    }
+
+    const fetchRecommendedFoods = async () => {
+        return FoodModule.getRecommendationList()
+            .then((response) => {
+                setRecommendedFoods(response);
+            })
+            .catch((error) => {
+                if (error.status === 404){
+                    setRecommendedFoods([])
+                } else {
+                    console.error('Error fetching recommended foods:', error);
+                }
+            });
+    }
+
     useEffect(() => {
-        setIsInitialLoad(true)
+        const initializeDashboard = async () => {
+            setIsInitialLoad(true)
 
-        setIntake({
-            energy: 100,
-            protein: 8,
-            total_fat: 3,
-            carbohydrate: 150,
-            calcium: 300,
-            iron: 0.5
-        })
+            try {
+                await Promise.all([
+                    setIntake({
+                        energy: 100,
+                        protein: 8,
+                        total_fat: 3,
+                        carbohydrate: 150,
+                        calcium: 300,
+                        iron: 0.5
+                    }),
 
-        setMinimum({
-            energy: 1350,
-            protein: 20,
-            total_fat: 45,
-            carbohydrate: 215,
-            calcium: 650,
-            iron: 7
-        })
+                    setMinimum({
+                        energy: 1350,
+                        protein: 20,
+                        total_fat: 45,
+                        carbohydrate: 215,
+                        calcium: 650,
+                        iron: 7
+                    }),
+                    fetchRecommendedFoods(),
+                    fetchEatenFoods()
+                ]);
+            } catch (error) {
+                console.error('Error initializing dashboard:', error);
+            } finally {
+                setIsInitialLoad(false)
+            }
+        }
 
-        setRecommendedFoods([{
-            name: "Baby Toddler cereal, rice with fruit, ready-to-eat",
-            ingredients: [
-                'Babyfood, water, bottled, GERBER, without added fluoride', 
-                'Babyfood, cereal, rice, dry fortified', 
-                'Sugars, granulated', 
-                'Flour, rice, white, unenriched',
-                'Baby Toddler fruit, NFS'
-            ],
-            energy: 130,
-            protein: 2.5,
-            fat: 0.5,
-            carbohydrate: 28,
-            calcium: 10,
-            iron: 0.4
-        }])
-
-        setEatenFoods([{
-            name: "Baby Toddler cereal, oatmeal with fruit, ready-to-eat",
-            ingredients: [
-                'Babyfood, water, bottled, GERBER, without added fluoride', 
-                'Babyfood, cereal, oatmeal, dry fortified', 
-                'Cereals, oats, regular and quick, not fortified, dry', 
-                'Sugars, granulated', 
-                'Baby Toddler fruit, NFS'
-            ],
-            energy: 100,
-            protein: 3.5,
-            fat: 3,
-            carbohydrate: 15,
-            calcium: 120,
-            iron: 0.5
-        }])
-
-        setIsInitialLoad(false)
+        initializeDashboard();
     }, [])
 
     useEffect(() => {
@@ -188,8 +191,8 @@ const Dashboard = () => {
                 </DashboardSection>
 
                 <div className="grid grid-cols-1 gap-4">
-                    <DashboardSection title="Recommended Foods">
-                        {recommendedFoods.length === 0 ?
+                    <DashboardSection title={recommendedFoods?.length > 0 ? "Recommended Foods" : null }>
+                        {recommendedFoods?.length === 0 ?
                             isInitialLoad ? 
                                 <div className='skeleton h-full w-full'/> 
                                 : 
@@ -199,7 +202,7 @@ const Dashboard = () => {
                                 </div>                                               
                             :
                             <FoodList maxHeight={isDesktop ? 141.5 : null} className='py-2'>
-                                { recommendedFoods.map((recommendedFood) => (
+                                { recommendedFoods?.map((recommendedFood) => (
                                     <FoodItem 
                                         food={recommendedFood}
                                         onClick={() => handleClickFoodItem(recommendedFood)}
@@ -212,10 +215,10 @@ const Dashboard = () => {
                     </DashboardSection>
 
                     <DashboardSection 
-                        title="Today's Eaten Foods" 
-                        action={eatenFoods.length > 0 ? <AddFoodButton /> : null}
+                        title={eatenFoods?.length > 0 ? "Today's Eaten Foods" : null }
+                        action={eatenFoods?.length > 0 ? <AddFoodButton /> : null}
                     >
-                        {eatenFoods.length === 0 ?
+                        {eatenFoods?.length === 0 ?
                             isInitialLoad ? 
                                 <div className='skeleton h-full w-full'/> 
                                 : 
@@ -225,7 +228,7 @@ const Dashboard = () => {
                                 </div>                            
                             :
                             <FoodList maxHeight={isDesktop ? 141.5 : null} className='py-2'>
-                                {eatenFoods.map((eatenFood) => (
+                                {eatenFoods?.map((eatenFood) => (
                                     <FoodItem
                                         food={eatenFood}
                                         onClick={() => handleClickFoodItem(eatenFood)}

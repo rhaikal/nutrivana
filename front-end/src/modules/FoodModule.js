@@ -7,6 +7,20 @@ const getFoods = () => {
         .catch(handleError);
 };
 
+const getEatenFoods = () => {
+    return FoodService.getEatenList()
+        .then(handleResponse)
+        .catch(handleError);
+};
+
+const getRecommendationList = () => {
+    return FoodService.getRecommendationList()
+        .then(handleResponse)
+        .catch(handleError);
+};
+
 export default {
-    getFoods
+    getFoods,
+    getEatenFoods,
+    getRecommendationList
 };
