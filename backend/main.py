@@ -316,12 +316,29 @@ def get_current_nutrient_residue(current_user: User):
 
     return nutrient_residue
 
-@app.get("/get_current_nutrient_residue")
-def get_nutrient_residue(
+@app.get("/get_nutrient_current")
+def get_nutrient_current(
     current_user: User = Depends(get_current_user)
 ):
-    result = get_current_nutrient_residue(current_user)
-    return result
+    food_histories = get_food_histories_for_user(current_user.id)
+    total_nutrition_consumed = []
+
+    for food_nutrition in food_histories:
+        food_histories_nutrition = db.query(FoodBeverages).filter(
+            FoodBeverages.f_id == food_nutrition.f_id
+        ).first()
+        food_histories_nutrition = {
+            nutrisi: getattr(food_histories_nutrition, nutrisi, 0) or 0
+            for nutrisi in NUTRITION_FEATURES
+        }
+        total_nutrition_consumed.append(food_histories_nutrition)
+
+    aggregated_nutrition = {nutrisi: 0 for nutrisi in NUTRITION_FEATURES}
+    for nutrition in total_nutrition_consumed:
+        for nutrisi, value in nutrition.items():
+            aggregated_nutrition[nutrisi] += value
+
+    return aggregated_nutrition
 
 def get_current_nutrient_deficiency_percent(current_user: User):
     food_histories = get_food_histories_for_user(current_user.id)
