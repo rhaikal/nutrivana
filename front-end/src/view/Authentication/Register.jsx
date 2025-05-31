@@ -36,6 +36,8 @@ const Register = () => {
                 .positive('Height must be positive')
                 .required('Height is required'),
             date_of_birth: Yup.date()
+                .max(new Date(), "Date of birth cannot be in the future")
+                .min(new Date(new Date().setFullYear(new Date().getFullYear() - 5)), "Date of birth must be within the last 5 years")
                 .required('Date of birth is required'),
             gender: Yup.string()
                 .required('Gender is required')
