@@ -73,6 +73,11 @@ const Dashboard = () => {
         detailModal.current.showModal()
     }
 
+    const handleClickLogout = () => {
+        localStorage.removeItem('access_token');
+        window.location.reload();
+    }
+
     useEffect(() => {
         setIsInitialLoad(true)
 
@@ -151,7 +156,7 @@ const Dashboard = () => {
                                 tabIndex={0}
                                 className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
                                 <li><a onClick={() => growthModal.current.showModal()}>Record Growth</a></li>
-                                <li><a>Log Out</a></li>
+                                <li><a onClick={handleClickLogout}>Log Out</a></li>
                             </ul>
                         </div>
                     </div>
