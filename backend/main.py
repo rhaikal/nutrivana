@@ -185,8 +185,8 @@ def get_minimum_nutrition(current_user: Annotated[User, Depends(get_current_user
         })
     return output
 
-@app.put("/users/update_nutritions")
-def update_nutritions(form_data: NutritionUpdateForm, current_user: Annotated[User, Depends(get_current_user)]):
+@app.put("/update_user_nutritions")
+def update_user_nutritions(form_data: NutritionUpdateForm, current_user: Annotated[User, Depends(get_current_user)]):
     age_months = relativedelta(datetime.now(), current_user.date_of_birth).years * 12 + \
                  relativedelta(datetime.now(), current_user.date_of_birth).months
 
