@@ -6,11 +6,14 @@ from dateutil.relativedelta import relativedelta
 from typing import Annotated, Literal
 from datetime import date
 from sqlalchemy import desc, func
+import numpy as np
+from sklearn.metrics.pairwise import linear_kernel
+
 
 # Local imports
 from core.core import ACCESS_TOKEN_EXPIRE_MINUTES, db, app
 from Model import User, UserMinNutritions, Food, Nutritions, FoodHistories, FoodBeverages
-from helper import get_password_hash, create_access_token, calculate_nutrition_status, calculate_minimum_nutrition 
+from helper import get_password_hash, create_access_token, calculate_nutrition_status, calculate_minimum_nutrition, INGREDIENT_VECTORIZED, NUTRITION_FEATURES
 from auth import authenticate_user, get_current_user
 
 # ======================
@@ -130,6 +133,12 @@ async def get_detail_foods(f_id: int):
     food = db.query(FoodBeverages).filter(FoodBeverages.f_id == f_id).all()
     return food
 
+@app.get("/get_status_nutritions")
+def get_status_nutritions():
+    current_user = Annotated[User, Depends(get_current_user)]
+    return current_user.nutrition_status
+
+
 @app.get("/get_minimum_nutrition")
 async def get_minimum_nutrition(current_user: Annotated[User, Depends(get_current_user)]):
     """Get user's minimum nutrition requirements"""
@@ -156,8 +165,8 @@ async def update_nutritions(
     # Update nutrition records
     nutrition_data = calculate_minimum_nutrition(age_months, current_user.nutrition_status)
     nutrition_mapping = {
-        "Calcium": 1, "Carbohydrate": 2, "Energy": 3, 
-        "Iron": 4, "Protein": 5, "Total Fat": 6
+        "calcium": 1, "carbohydrate": 2, "energy": 3, 
+        "iron": 4, "protein": 5, "fat": 6
     }
     
     # Delete old records
@@ -198,3 +207,118 @@ async def post_food_histories(
     db.commit()
 
     return {"status": "success"}
+
+def get_food_histories():
+    current_user = Annotated[User, Depends(get_current_user)]
+    current_user_id = current_user.id
+    current_date = date.today()
+    food_history = db.query(FoodHistories).filter(FoodHistories.u_id == current_user_id).filter(FoodHistories.date == current_date).all()
+    return food_history
+
+def get_current_nutrient_residue():
+    current_user = Annotated[User, Depends(get_current_user)]  # Hanya berlaku jika dipanggil sebagai dependency
+    food_histories = get_food_histories()  # list of FoodHistories model objects
+    total_nutrition_consumed = []
+
+    for food_nutrition in food_histories:
+        food_histories_nutrition = db.query(FoodBeverages).filter(
+            FoodBeverages.f_id == food_nutrition.f_id
+        ).first()
+        food_histories_nutrition = {
+            nutrisi: getattr(food_histories_nutrition, nutrisi, 0) or 0
+            for nutrisi in NUTRITION_FEATURES
+        }
+        total_nutrition_consumed.append(food_histories_nutrition)
+
+    aggregated_nutrition = {nutrisi: 0 for nutrisi in NUTRITION_FEATURES}
+    for nutrition in total_nutrition_consumed:
+        for nutrisi, value in nutrition.items():
+            aggregated_nutrition[nutrisi] += value
+
+    rows = (
+        db.query(UserMinNutritions.value, Nutritions.name)
+        .join(Nutritions, UserMinNutritions.n_id == Nutritions.id)
+        .filter(UserMinNutritions.u_id == current_user.id)
+        .all()
+    )
+    min_nutrition_needs = {name.lower(): value for value, name in rows}
+
+    nutrient_residue = {}
+    for nutrisi in NUTRITION_FEATURES:
+        need = min_nutrition_needs.get(nutrisi, 0)
+        consumed = aggregated_nutrition.get(nutrisi, 0)
+        residue = max(0, need - consumed)
+        nutrient_residue[nutrisi] = residue
+
+    return nutrient_residue
+
+@app.get("/get_food_histories")
+def get_food_histories_endpoints():
+    return get_food_histories()
+
+@app.get("/food_recomendations")
+def get_recommendations():
+    remaining = get_current_nutrient_residue()
+
+    # 1. filter makanan yang sudah dimakan
+    food_histories = get_food_histories()
+    food_histories_id = [i.f_id for i in food_histories]
+    food_beverages = db.query(FoodBeverages).all()
+    food_beverages_id = [i.f_id for i in food_beverages]
+    filter_foods_id = [f_id for f_id in food_beverages_id if f_id not in food_histories_id]
+
+    # 2. calculate ingredient similarity if there's consumption history
+
+    avg_ingredient_similarity = np.mean([
+        linear_kernel(INGREDIENT_VECTORIZED[idx:idx+1],
+                    INGREDIENT_VECTORIZED[food_beverages_id])[0]
+        for idx in food_histories_id
+    ], axis=0)
+
+    # if filter_foods:
+
+
+    return avg_ingredient_similarity
+
+    # # 1. Filter out already consumed foods
+    # filtered_food = self.food_db[~self.food_db['id'].isin(self.consumed_foods)].copy()
+    
+    # # 2. Calculate ingredient similarity if there's consumption history
+    # if self.consumed_foods:
+    #     consumed_indices = self.food_db[self.food_db['id'].isin(self.consumed_foods)].index
+    #     avg_ingredient_similarity = np.mean([
+    #         linear_kernel(self.ingredient_vectors[idx:idx+1], 
+    #                     self.ingredient_vectors[filtered_food.index])[0] 
+    #         for idx in consumed_indices
+    #     ], axis=0)
+    #     filtered_food['ingredient_similarity'] = avg_ingredient_similarity
+    # else:
+    #     filtered_food['ingredient_similarity'] = 0
+    
+    # # 3. Find top 3 nutrients with highest remaining needs
+    # sorted_remaining = sorted(remaining.items(), key=lambda x: x[1], reverse=True)
+    # top_nutrients = [nutrient for nutrient, amount in sorted_remaining[:3] if amount > 0]
+    
+    # # 4. Calculate nutrition score based on top needed nutrients
+    # if top_nutrients:
+    #     # Calculate weighted sum where weights are the remaining amounts
+    #     filtered_food['nutrition_score'] = sum(
+    #         filtered_food[nutrient] * remaining[nutrient] 
+    #         for nutrient in top_nutrients
+    #     )
+        
+    #     # Normalize scores to 0-1 range
+    #     max_score = filtered_food['nutrition_score'].max()
+    #     if max_score > 0:
+    #         filtered_food['nutrition_score'] /= max_score
+    # else:
+    #     filtered_food['nutrition_score'] = 0
+    
+    # # 5. Calculate hybrid score (80% nutrition needs, 20% ingredient similarity)
+    # filtered_food['hybrid_score'] = (
+    #     filtered_food['nutrition_score'] * 0.8 + 
+    #     filtered_food['ingredient_similarity'] * 0.2
+    # )
+    
+    # # 6. Return top recommendations
+    # return filtered_food.sort_values('hybrid_score', ascending=False).head(3)

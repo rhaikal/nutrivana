@@ -98,32 +98,32 @@ SELECT
     ia.i_names,
     MAX(
         CASE
-            WHEN n.name = 'Calcium' THEN fn.value
+            WHEN n.name = 'calcium' THEN fn.value
         END
     ) AS calcium,
     MAX(
         CASE
-            WHEN n.name = 'Carbohydrate' THEN fn.value
+            WHEN n.name = 'carbohydrate' THEN fn.value
         END
     ) AS carbohydrate,
     MAX(
         CASE
-            WHEN n.name = 'Energy' THEN fn.value
+            WHEN n.name = 'energy' THEN fn.value
         END
     ) AS energy,
     MAX(
         CASE
-            WHEN n.name = 'Total Fat' THEN fn.value
+            WHEN n.name = 'fat' THEN fn.value
         END
     ) AS fat,
     MAX(
         CASE
-            WHEN n.name = 'Iron' THEN fn.value
+            WHEN n.name = 'iron' THEN fn.value
         END
     ) AS iron,
     MAX(
         CASE
-            WHEN n.name = 'Protein' THEN fn.value
+            WHEN n.name = 'protein' THEN fn.value
         END
     ) AS protein
 FROM
@@ -5584,12 +5584,12 @@ VALUES (
 -- Nutritions Data
 INSERT INTO
     public.nutritions (name)
-VALUES ('Calcium'),
-    ('Carbohydrate'),
-    ('Energy'),
-    ('Iron'),
-    ('Protein'),
-    ('Total Fat');
+VALUES ('calcium'),
+    ('carbohydrate'),
+    ('energy'),
+    ('iron'),
+    ('protein'),
+    ('fat');
 
 -- Food Ingredients Data
 INSERT INTO

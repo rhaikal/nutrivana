@@ -58,3 +58,12 @@ class FoodBeverages(Base):
     fat = Column(Float)
     iron = Column(Float)
     protein = Column(Float)
+
+class Ingredients(Base):
+    __tablename__ = 'ingredients'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255))
+
+
+
