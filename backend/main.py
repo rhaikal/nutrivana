@@ -13,7 +13,7 @@ from core.core import ACCESS_TOKEN_EXPIRE_MINUTES, db, app
 from Model import User, UserMinNutritions, Food, Nutritions, FoodHistories, FoodBeverages
 from helper import (
     get_password_hash, create_access_token, calculate_nutrition_status,
-    calculate_minimum_nutrition, INGREDIENT_VECTORIZED, NUTRITION_FEATURES, id_to_index
+    calculate_minimum_nutrition, INGREDIENT_VECTORIZED, NUTRITION_FEATURES, id_to_index, nutrition_mapping
 )
 from auth import authenticate_user, get_current_user
 
@@ -40,6 +40,9 @@ class NutritionUpdateForm(BaseModel):
 
 class FoodHistoriesForm(BaseModel):
     f_id: int
+
+class FoodHistoriesBulkForm(BaseModel):
+    items: List[FoodHistoriesForm]
 
 # ======================
 # API Endpoints
@@ -88,7 +91,6 @@ async def register(form_data: RegisterForm):
     db.commit()
 
     nutrition_data = calculate_minimum_nutrition(age_months, new_user.nutrition_status)
-    nutrition_mapping = {"calcium": 1, "carbohydrate": 2, "energy": 3, "iron": 4, "protein": 5, "fat": 6}
 
     next_id = lambda: (db.query(UserMinNutritions).order_by(desc(UserMinNutritions.id)).first().id + 1) if db.query(UserMinNutritions).count() else 1
 
@@ -125,7 +127,15 @@ async def get_status_nutritions(current_user: Annotated[User, Depends(get_curren
 
 @app.get("/get_minimum_nutrition")
 async def get_minimum_nutrition(current_user: Annotated[User, Depends(get_current_user)]):
-    return db.query(UserMinNutritions).filter(UserMinNutritions.u_id == current_user.id).all()
+    id_to_nutrition = {v: k for k, v in nutrition_mapping.items()}
+    results = db.query(UserMinNutritions).filter(UserMinNutritions.u_id == current_user.id).all()
+    output = []
+    for row in results:
+        output.append({
+            "name": id_to_nutrition.get(row.id, "unknown"),
+            "value": row.value
+        })
+    return output
 
 @app.put("/users/update_nutritions")
 async def update_nutritions(form_data: NutritionUpdateForm, current_user: Annotated[User, Depends(get_current_user)]):
@@ -138,7 +148,6 @@ async def update_nutritions(form_data: NutritionUpdateForm, current_user: Annota
     db.commit()
 
     nutrition_data = calculate_minimum_nutrition(age_months, current_user.nutrition_status)
-    nutrition_mapping = {"calcium": 1, "carbohydrate": 2, "energy": 3, "iron": 4, "protein": 5, "fat": 6}
 
     db.query(UserMinNutritions).filter(UserMinNutritions.u_id == current_user.id).delete()
 
@@ -158,18 +167,30 @@ async def update_nutritions(form_data: NutritionUpdateForm, current_user: Annota
     return {"status": "success"}
 
 @app.post("/post_food_histories")
-async def post_food_histories(form_data: FoodHistoriesForm, current_user: Annotated[User, Depends(get_current_user)]):
+async def post_food_histories(
+    form_data: FoodHistoriesBulkForm,
+    current_user: Annotated[User, Depends(get_current_user)]
+):
     current_date = date.today()
     last_record = db.query(FoodHistories).order_by(desc(FoodHistories.id)).first()
     next_id = last_record.id + 1 if last_record else 1
 
-    new_food = FoodHistories(id=next_id, f_id=form_data.f_id, u_id=current_user.id, date=current_date)
-    db.add(new_food)
+    new_records = []
+    for i, item in enumerate(form_data.items):
+        new_food = FoodHistories(
+            id=next_id + i,
+            f_id=item.f_id,
+            u_id=current_user.id,
+            date=current_date
+        )
+        new_records.append(new_food)
+
+    db.add_all(new_records)
     db.commit()
 
-    return {"status": "success"}
+    return {"status": "success", "inserted": len(new_records)}
 
-def get_food_histories_for_user(user_id: int) -> List[FoodHistories]:
+async def get_food_histories_for_user(user_id: int) -> List[FoodHistories]:
     return db.query(FoodHistories).filter(
         FoodHistories.u_id == user_id,
         FoodHistories.date == date.today()
@@ -180,7 +201,7 @@ def get_food_histories_for_user(user_id: int) -> List[FoodHistories]:
 async def get_food_histories(current_user: Annotated[User, Depends(get_current_user)]):
     return get_food_histories_for_user(current_user.id)
 
-def get_current_nutrient_residue(current_user: User):
+async def get_current_nutrient_residue(current_user: User):
     food_histories = get_food_histories_for_user(current_user.id)  # list of FoodHistories model objects
     total_nutrition_consumed = []
 
@@ -216,7 +237,7 @@ def get_current_nutrient_residue(current_user: User):
 
     return nutrient_residue
 
-def get_current_nutrient_deficiency_percent(current_user: User):
+async def get_current_nutrient_deficiency_percent(current_user: User):
     food_histories = get_food_histories_for_user(current_user.id)  # list of FoodHistories model objects
     total_nutrition_consumed = []
 
@@ -260,7 +281,7 @@ def get_current_nutrient_deficiency_percent(current_user: User):
     return nutrient_deficiency_percent
 
 @app.get("/food_recommendations")
-def get_recommendations(current_user: Annotated[User, Depends(get_current_user)]):
+async def get_recommendations(current_user: Annotated[User, Depends(get_current_user)]):
     remaining_percent = get_current_nutrient_deficiency_percent(current_user)
     remaining = get_current_nutrient_residue(current_user)
 
@@ -322,7 +343,7 @@ def get_recommendations(current_user: Annotated[User, Depends(get_current_user)]
     top_food_ids = [filter_foods_id[i] for i in top_indices]
 
     # Optionally, limit the number of recommendations (e.g., top 5)
-    n_recommend = min(5, len(top_food_ids))
+    n_recommend = min(3, len(top_food_ids))
     recommended_food_ids = top_food_ids[:n_recommend]
 
     recomendation_food = (

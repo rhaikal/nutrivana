@@ -77,13 +77,12 @@ WITH
     ingredient_agg AS (
         SELECT
             fi.f_id,
-            string_agg(i.id::text, ', ') AS i_ids,
-            string_agg(
+            array_agg(i.id::text) AS i_ids,
+            array_agg(
                 regexp_replace(
                     lower(trim(i.name)),
                     '[,\s]+', '_', 'g'
-                ), 
-                ', '
+                )
             ) AS i_names
         FROM
             food_ingredients fi

@@ -178,6 +178,7 @@ def calculate_minimum_nutrition(age_months: int, status: str) -> dict:
     return needs
 
 NUTRITION_FEATURES = ["calcium", "carbohydrate", "energy", "iron", "protein", "fat"]
+nutrition_mapping = {"calcium": 1, "carbohydrate": 2, "energy": 3, "iron": 4, "protein": 5, "fat": 6}
 
 vectorizer = TfidfVectorizer()
 ingredients = db.query(Ingredients).all()
