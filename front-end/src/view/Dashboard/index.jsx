@@ -33,7 +33,7 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
-    const { isLoading: isFetchingUsersData } = useContext(UserContext);
+    const { updateIntakeNutritions } = useContext(UserContext);
 
     const detailModal = useRef();
     const foodModal = useRef();
@@ -43,6 +43,8 @@ const Dashboard = () => {
     const isDesktop = useMediaQuery('(min-width: 1024px)');
 
     const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [isFoodModalSaved, setIsFoodModalSaved] = useState(false);
+    const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
     const [chartData] = useState({
         weight: [4.2, 5.1, 6.3, 7.2, 7.8, 8.2, 8.6, 8.9, 9.2, 9.4, 9.7, 10.0],
         height: [52.3, 55.8, 59.4, 62.1, 64.3, 66.1, 67.8, 69.2, 70.6, 71.9, 73.1, 74.3]
@@ -75,6 +77,21 @@ const Dashboard = () => {
         localStorage.removeItem('access_token');
         window.location.reload();
     }
+    
+    const handleSaveFoodModal = async (foodIds) => {
+        setIsFoodModalSaved(true)
+        return FoodModule.saveEatenFoods({items: foodIds})
+            .then(async () => {
+                fetchRecommendedFoods();
+                await fetchEatenFoods();
+                await updateIntakeNutritions();
+            })
+            .catch((error) => {
+                console.error('Error saving eaten food ids:', error);
+            }).finally(() => {
+                setIsFoodModalSaved(false);
+            });
+    }
 
     const fetchEatenFoods = async () => {
         return FoodModule.getEatenFoods()
@@ -87,7 +104,8 @@ const Dashboard = () => {
     }
 
     const fetchRecommendedFoods = async () => {
-        return FoodModule.getRecommendationList()
+        setIsLoadingRecommendations(true);
+        return FoodModule.getRecommendationFoods()
             .then((response) => {
                 setRecommendedFoods(response);
             })
@@ -97,31 +115,28 @@ const Dashboard = () => {
                 } else {
                     console.error('Error fetching recommended foods:', error);
                 }
+            })
+            .finally(() => {
+                setIsLoadingRecommendations(false);
             });
     }
 
     useEffect(() => {
         const initializeDashboard = async () => {
-            setIsInitialLoad(true)
+            setIsInitialLoad(true);
 
             try {
-                await Promise.all([
-                    fetchRecommendedFoods(),
-                    fetchEatenFoods()
-                ]);
-            } catch (error) {
-                console.error('Error initializing dashboard:', error);
-            } finally {
-                setIsInitialLoad(false)
+                fetchRecommendedFoods();
+                await fetchEatenFoods();
+            } catch (err) {
+                console.error(err)
             }
+
+            setIsInitialLoad(false)
         }
 
         initializeDashboard();
     }, [])
-
-    useEffect(() => {
-        setIsInitialLoad(isFetchingUsersData)
-    }, [isFetchingUsersData])
 
     return (
         <div className="container mx-auto">
@@ -153,7 +168,7 @@ const Dashboard = () => {
                     <div className="flex flex-col h-full">                       
                         <DashboardSection className="flex-grow">
                             <NutritionIntake
-                                isLoading={isInitialLoad}
+                                isLoading={isInitialLoad || isFoodModalSaved}
                             />
                         </DashboardSection>
                     </div>
@@ -161,7 +176,7 @@ const Dashboard = () => {
             </div>
 
             <div className={`grid ${bottomSectionLayout} gap-4 px-4 pb-4`}>
-                <DashboardSection title="Growth Chart" className='max-h-fit'>
+                <DashboardSection title="Growth Chart">
                     <LineChart 
                         data={chartData}
                         isLoading={isInitialLoad}
@@ -170,25 +185,24 @@ const Dashboard = () => {
 
                 <div className="grid grid-cols-1 gap-4">
                     <DashboardSection title={recommendedFoods?.length > 0 ? "Recommended Foods" : null }>
-                        {recommendedFoods?.length === 0 ?
-                            isInitialLoad ? 
-                                <div className='skeleton h-full w-full'/> 
-                                : 
+                        {isLoadingRecommendations ? 
+                            <div className='skeleton h-full w-full'/> 
+                            : recommendedFoods?.length === 0 ?
                                 <div className="flex flex-col items-center text-center gap-4">
                                     <h1 className="card-title text-3xl text-neutral font-bold mt-4">No Recommendations Yet</h1>
                                     <p className="text-base text-neutral-500">Add some foods to your history to get personalized recommendations</p>
                                 </div>                                               
-                            :
-                            <FoodList maxHeight={isDesktop ? 141.5 : null} className='py-2'>
-                                { recommendedFoods?.map((recommendedFood) => (
-                                    <FoodItem 
-                                        food={recommendedFood}
-                                        onClick={() => handleClickFoodItem(recommendedFood)}
-                                        isLoading={isInitialLoad}
-                                    />
-                                ))
-                                }
-                            </FoodList>
+                                :
+                                <FoodList maxHeight={isDesktop ? 141.5 : null} className='py-2'>
+                                    { recommendedFoods?.map((recommendedFood) => (
+                                        <FoodItem 
+                                            food={recommendedFood}
+                                            onClick={() => handleClickFoodItem(recommendedFood)}
+                                            isLoading={isLoadingRecommendations}
+                                        />
+                                    ))
+                                    }
+                                </FoodList>
                         }
                     </DashboardSection>
 
@@ -196,10 +210,9 @@ const Dashboard = () => {
                         title={eatenFoods?.length > 0 ? "Today's Eaten Foods" : null }
                         action={eatenFoods?.length > 0 ? <AddFoodButton /> : null}
                     >
-                        {eatenFoods?.length === 0 ?
-                            isInitialLoad ? 
-                                <div className='skeleton h-full w-full'/> 
-                                : 
+                        {isInitialLoad || isFoodModalSaved ?
+                            <div className='skeleton h-full w-full'/> 
+                            : eatenFoods?.length === 0 ?
                                 <div className="flex flex-col items-center gap-4">
                                     <h1 className="text-3xl font-bold text-neutral">No Food History</h1>
                                     <AddFoodButton />
@@ -210,7 +223,7 @@ const Dashboard = () => {
                                     <FoodItem
                                         food={eatenFood}
                                         onClick={() => handleClickFoodItem(eatenFood)}
-                                        isLoading={isInitialLoad}
+                                        isLoading={isInitialLoad || isFoodModalSaved}
                                     />
                                 ))}
                             </FoodList>
@@ -220,7 +233,7 @@ const Dashboard = () => {
             </div>
 
             <DetailModal food={selectedFood} ref={detailModal} />
-            <FoodModal ref={foodModal} />
+            <FoodModal onSave={handleSaveFoodModal} ref={foodModal} />
             <GrowthModal ref={growthModal} />
         </div>
     )

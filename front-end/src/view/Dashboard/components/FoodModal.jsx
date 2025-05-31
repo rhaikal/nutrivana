@@ -69,12 +69,12 @@ const FoodModalComponent = forwardRef(({ onSave = () => {}}, ref) => {
         setTimeout(() => {
             if (isSelected) {
                 setSelectedFoods(prev => prev.filter(f => f.id !== food.id));
-            } else if (selectedFoods.length < 3) {
+            } else if (selectedFoods.length < 4) {
                 setSelectedFoods(prev => [...prev, food]);
             } else {
                 Swal.fire({
                     title: 'Maximum Foods Reached',
-                    text: 'You can only select up to 3 foods at a time',
+                    text: 'You can only select up to 4 foods at a time',
                     icon: 'warning',
                     confirmButtonColor: '#3085d6',
                     confirmButtonText: 'OK'
@@ -88,11 +88,33 @@ const FoodModalComponent = forwardRef(({ onSave = () => {}}, ref) => {
     }, []);
     
     const handleSave = useCallback(() => {
-        if (onSave) {
-            onSave(selectedFoods);
-        }
-
-        resetState();
+        Swal.fire({
+            title: 'Confirm Food Intake',
+            text: 'Are you sure these selected foods have been eaten?',                        
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, save it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                if (onSave) {
+                    Promise.resolve(
+                        onSave(selectedFoods.map((selectedFood) => ({ f_id: selectedFood.id })))
+                    ).catch((err) => {
+                        console.error('Failed to save food intake:', err);
+                        Swal.fire({
+                            title: 'Failed to Save Food Intake',
+                            text: 'Please try again later',
+                            icon: 'error',
+                            confirmButtonColor: '#3085d6',
+                            confirmButtonText: 'OK'
+                        });
+                    });
+                    resetState();
+                }
+            }
+        });
     }, [selectedFoods, onSave]);
     
     const loadMore = useCallback(() => {
@@ -139,97 +161,97 @@ const FoodModalComponent = forwardRef(({ onSave = () => {}}, ref) => {
             
             <div className="fixed inset-0 flex items-center justify-center p-4">
                 <DialogPanel 
-                transition
-                className="w-11/12 max-w-5xl h-full overflow-auto bg-white rounded-lg shadow-xl transform transition-all data-closed:opacity-0 data-closed:scale-95 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in">
-                    <div className="p-6">
-                        <div className="border border-gray-200 rounded-lg mb-3 max-h-96 overflow-auto">
-                            <div className="p-4">
-                                <NutritionIntake
-                                    intake={totalNutrition}
-                                    isLoading={isLoading}
-                                />
-                            </div>
-                        </div>
-                        
-                        {selectedFoods.length > 0 && (
-                            <div className="border border-dashed border-blue-300 rounded-lg p-2 mb-3 bg-blue-50/20">
-                                <div className="font-semibold text-blue-600 mb-2">Selected Foods</div>
-                                <FoodList maxHeight={150}>
-                                    {selectedFoods.map(food => (
-                                        <FoodItemInput
-                                            key={food.id}
-                                            food={food}
-                                            checked={true}
-                                            onChange={() => handleFoodToggle(food)}
-                                        />
-                                    ))}
-                                </FoodList>
-                            </div>
-                        )}
-
-                        <label className="input mb-3">
-                            <MagnifyingGlassIcon className="h-[2em] opacity-50" />
-                            <input 
-                                type="search" 
-                                className="grow" 
-                                placeholder="Search foods" 
-                                value={searchQuery}
-                                onChange={handleSearchChange}
+                    transition
+                    className="bg-base-100 rounded-box w-[91.6667%] max-w-7/12 max-h-[100vh] p-6 overflow-y-auto shadow-2xl transform transition-all data-closed:opacity-0 data-closed:scale-95 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
+                >
+                    <div className="card border border-base-300 mb-3 max-h-96 overflow-auto">
+                        <div className="card-body">
+                            <NutritionIntake
+                                intake={totalNutrition}
+                                isLoading={isLoading}
                             />
-                        </label>
-                        
-                        <div>
-                            <div className="font-semibold mb-2">Available Foods</div>
-                            <FoodList maxHeight={selectedFoods.length > 0 ? 200 : 357.5}>
-                                {isLoading ? (
-                                    Array(5).fill(0).map((_, index) => (
-                                        <li key={index} className="list-row">
-                                            <div className="skeleton h-24 w-full"></div>
-                                        </li>
-                                    ))
-                                ) : filteredFoods.length === 0 ? (
-                                    <li className="list-row justify-center py-8 text-gray-500">
-                                        No foods found matching "{searchQuery}"
-                                    </li>
-                                ) : (
-                                    <>
-                                        {visibleFoods
-                                            .filter(food => !selectedFoods.some(f => f.id === food.id))
-                                            .map(food => (
-                                                <FoodItemInput
-                                                    key={food.id}
-                                                    food={food}
-                                                    checked={false}
-                                                    onChange={() => handleFoodToggle(food)}
-                                                />
-                                            ))
-                                        }
-                                        
-                                        <InfiniteScrollTrigger 
-                                            onLoadMore={loadMore}
-                                            isLoading={isLoadingMore}
-                                            remainingCount={filteredFoods.filter(food => !selectedFoods.some(f => f.id === food.id)).length - visibleCount}
-                                        />
-                                    </>
-                                )}
+                        </div>
+                    </div>
+                    
+                    {selectedFoods.length > 0 && (
+                        <div className="border border-dashed border-blue-300 rounded-lg p-2 mb-3 bg-blue-50/20">
+                            <div className="font-semibold text-blue-600 mb-2">Selected Foods</div>
+                            <FoodList maxHeight={150}>
+                                {selectedFoods.map(food => (
+                                    <FoodItemInput
+                                        key={food.id}
+                                        food={food}
+                                        checked={true}
+                                        onChange={() => handleFoodToggle(food)}
+                                    />
+                                ))}
                             </FoodList>
                         </div>
-                        
-                        <div className="mt-6 flex justify-end gap-3">
-                            <button 
-                                className="px-4 py-2 rounded-md hover:bg-gray-50"
-                                onClick={resetState}
-                            >
-                                Close
-                            </button>
-                            <button 
-                                className="px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                                onClick={handleSave}
-                                disabled={selectedFoods.length === 0}
-                            >
-                                Save
-                            </button>
-                        </div>
+                    )}
+
+                    <label className="input mb-3">
+                        <MagnifyingGlassIcon className="h-[2em] opacity-50" />
+                        <input 
+                            type="search" 
+                            className="grow" 
+                            placeholder="Search foods" 
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                        />
+                    </label>
+                    
+                    <div>
+                        <div className="font-semibold mb-2">Available Foods</div>
+                        <FoodList maxHeight={selectedFoods.length > 0 ? 200 : 357.5}>
+                            {isLoading ? (
+                                Array(5).fill(0).map((_, index) => (
+                                    <li key={index} className="list-row">
+                                        <div className="skeleton h-24 w-full"></div>
+                                    </li>
+                                ))
+                            ) : filteredFoods.length === 0 ? (
+                                <li className="list-row justify-center py-8 text-gray-500">
+                                    No foods found matching "{searchQuery}"
+                                </li>
+                            ) : (
+                                <>
+                                    {visibleFoods
+                                        .filter(food => !selectedFoods.some(f => f.id === food.id))
+                                        .map(food => (
+                                            <FoodItemInput
+                                                key={food.id}
+                                                food={food}
+                                                checked={false}
+                                                onChange={() => handleFoodToggle(food)}
+                                            />
+                                        ))
+                                    }
+                                    
+                                    <InfiniteScrollTrigger 
+                                        onLoadMore={loadMore}
+                                        isLoading={isLoadingMore}
+                                        remainingCount={filteredFoods.filter(food => !selectedFoods.some(f => f.id === food.id)).length - visibleCount}
+                                    />
+                                </>
+                            )}
+                        </FoodList>
+                    </div>
+                    
+                    <div className="modal-action">
+                        <button 
+                            className="btn"
+                            onClick={resetState}
+                        >
+                            Close
+                        </button>
+                        <button 
+                            type='button'
+                            className="btn btn-info"
+                            onClick={handleSave}
+                            disabled={selectedFoods.length === 0}
+                        >
+                            Save
+                        </button>
                     </div>
                 </DialogPanel>
             </div>
@@ -238,9 +260,7 @@ const FoodModalComponent = forwardRef(({ onSave = () => {}}, ref) => {
 });
 
 FoodModalComponent.propTypes = {
-    onSave: PropTypes.func,
-    isOpen: PropTypes.bool,
-    onClose: PropTypes.func
+    onSave: PropTypes.func
 };
 
 FoodModalComponent.displayName = 'FoodModal';

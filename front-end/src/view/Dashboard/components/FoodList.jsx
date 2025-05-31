@@ -9,7 +9,7 @@ export const FoodItem = ({ food, onClick, isLoading }) => {
       <div>
         <div className="badge badge-soft badge-info !border-blue-300 !rounded-box">
           <span className='max-w-96 truncate'>
-            {food.name}
+            {food?.f_name ?? food?.food_name}
           </span>
         </div>
         <div className="flex gap-2 pt-2 text-accent text-sm opacity-60">

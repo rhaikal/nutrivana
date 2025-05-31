@@ -13,8 +13,14 @@ const getEatenFoods = () => {
         .catch(handleError);
 };
 
-const getRecommendationList = () => {
-    return FoodService.getRecommendationList()
+const getRecommendationFoods = () => {
+    return FoodService.getRecommendationFoods()
+        .then(handleResponse)
+        .catch(handleError);
+};
+
+const saveEatenFoods = (payload) => {
+    return FoodService.saveEatenList(payload)
         .then(handleResponse)
         .catch(handleError);
 };
@@ -22,5 +28,6 @@ const getRecommendationList = () => {
 export default {
     getFoods,
     getEatenFoods,
-    getRecommendationList
+    getRecommendationFoods,
+    saveEatenFoods
 };

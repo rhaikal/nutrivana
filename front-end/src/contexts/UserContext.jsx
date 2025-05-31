@@ -39,8 +39,16 @@ export function UserProvider({ children }) {
     }
   }, []);
 
+  const updateIntakeNutritions = async () => {
+    const intakeNutritions = await UserModule.getCurrentIntakeNutritions();
+    setUser((prevUser) => ({
+      ...prevUser,
+      intakeNutritions
+    }));
+  };
+
   return (
-    <UserContext.Provider value={{ user, setUser, isLoading }}>
+    <UserContext.Provider value={{ user, setUser, updateIntakeNutritions, isLoading }}>
       {children}
     </UserContext.Provider>
   );
