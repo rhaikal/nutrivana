@@ -10,4 +10,14 @@ const axiosInstance = axios.create({
     }
 });
 
-export { axiosInstance, API_URL };
+const authorizedHeader = () => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+        return {
+            Authorization: `Bearer ${token}`,
+        };
+    }
+    return {};
+};
+
+export { axiosInstance, authorizedHeader, API_URL };

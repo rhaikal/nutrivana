@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { forwardRef, useEffect, useRef } from 'react';
 
 export const FoodItem = ({ food, onClick, isLoading }) => {
   return ( isLoading ? 
@@ -44,27 +45,32 @@ FoodItem.defaultProps = {
   isLoading: false
 };
 
-export const FoodItemInput = ({ food, checked, onChange }) => {
+export const FoodItemInput = ({ food, checked, onChange, className = '' }) => {
   return (
-    <li className={`list-row items-center-safe justify-between border-2 ${checked ? 'border-blue-300' : 'border-base-200'} cursor-pointer hover:bg-base-300`}>
-      <div>
-        <div className="pb-2 font-semibold">{food.name}</div>
-        <div className="flex gap-2">
-          <div className="badge badge-soft badge-info border !border-blue-300 !rounded-box">Energy: {food.energy}</div>
-          <div className="badge badge-soft badge-info border !border-blue-300 !rounded-box">Protein: {food.protein}</div>
-          <div className="badge badge-soft badge-info border !border-blue-300 !rounded-box">Total Fat: {food.fat}</div>
-          <div className="badge badge-soft badge-info border !border-blue-300 !rounded-box">Carbohydrate: {food.carbohydrate}</div>
-          <div className="badge badge-soft badge-info border !border-blue-300 !rounded-box">Calcium: {food.calcium}</div>
-          <div className="badge badge-soft badge-info border !border-blue-300 !rounded-box">Iron: {food.iron}</div>
+    <div className='transition-all duration-300 ease-out animate-fade-in'>
+      <li 
+        onClick={onChange} 
+        className={`list-row items-center-safe justify-between border-2 ${checked ? 'border-blue-300' : 'border-base-200'} cursor-pointer hover:bg-base-300 ${className}`}
+      >
+        <div>
+          <div className="pb-2 font-semibold">{food.name}</div>
+          <div className="flex gap-2">
+            <div className="badge badge-soft badge-info border !border-blue-300 !rounded-box">Energy: {food.energy}</div>
+            <div className="badge badge-soft badge-info border !border-blue-300 !rounded-box">Protein: {food.protein}</div>
+            <div className="badge badge-soft badge-info border !border-blue-300 !rounded-box">Total Fat: {food.fat}</div>
+            <div className="badge badge-soft badge-info border !border-blue-300 !rounded-box">Carbohydrate: {food.carbohydrate}</div>
+            <div className="badge badge-soft badge-info border !border-blue-300 !rounded-box">Calcium: {food.calcium}</div>
+            <div className="badge badge-soft badge-info border !border-blue-300 !rounded-box">Iron: {food.iron}</div>
+          </div>
         </div>
-      </div>
-      <input 
-        type="checkbox"
-        className="checkbox checkbox-info self-center place-self-end" 
-        checked={checked} 
-        onChange={onChange}
-      />
-    </li>
+        <input 
+          type="checkbox"
+          className="checkbox checkbox-info self-center place-self-end" 
+          checked={checked} 
+          onChange={onChange}
+        />
+      </li>
+    </div>
   );
 };
 
@@ -79,22 +85,71 @@ FoodItemInput.propTypes = {
     iron: PropTypes.number.isRequired
   }).isRequired,
   checked: PropTypes.bool.isRequired,
-  onChange: PropTypes.func.isRequired
-};
-
-export const FoodList = ({ children, className }) => {
-  return (
-    <ul className={`list bg-base-100 rounded-box w-full ${className}`}>
-      {children}
-    </ul>
-  );
-};
-
-FoodList.propTypes = {
-  children: PropTypes.node.isRequired,
+  onChange: PropTypes.func.isRequired,
   className: PropTypes.string
 };
 
-FoodList.defaultProps = {
-  className: ''
+export const InfiniteScrollTrigger = ({ onLoadMore, isLoading, remainingCount }) => {
+  const triggerRef = useRef(null);
+  
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoading && remainingCount > 0) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    
+    const currentTrigger = triggerRef.current;
+    if (currentTrigger) {
+      observer.observe(currentTrigger);
+    }
+    
+    return () => {
+      if (currentTrigger) {
+        observer.unobserve(currentTrigger);
+      }
+    };
+  }, [onLoadMore, isLoading, remainingCount]);
+  
+  if (remainingCount <= 0) return null;
+  
+  return (
+    <li ref={triggerRef} className="list-row justify-center py-4">
+      {isLoading ? (
+        <div className="loading loading-spinner loading-md"></div>
+      ) : (
+        <button 
+          className="btn btn-sm btn-outline" 
+          onClick={onLoadMore}
+        >
+          Load more ({remainingCount} remaining)
+        </button>
+      )}
+    </li>
+  );
 };
+
+InfiniteScrollTrigger.propTypes = {
+  onLoadMore: PropTypes.func.isRequired,
+  isLoading: PropTypes.bool,
+  remainingCount: PropTypes.number.isRequired
+};
+
+InfiniteScrollTrigger.defaultProps = {
+  isLoading: false
+};
+
+export const FoodList = forwardRef(({ children, className, maxHeight }, ref) => {
+  const style = maxHeight ? { maxHeight: `${maxHeight}px`, overflowY: 'auto' } : {};
+  
+  return (
+    <div ref={ref} style={style}>
+      <ul className={`list bg-base-100 rounded-box w-full ${className}`}>
+        {children}
+      </ul>
+    </div>
+  );
+});
