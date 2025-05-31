@@ -133,7 +133,7 @@ const Register = () => {
                         <div 
                             ref={step1Ref}
                             className={`transition-all duration-500 ease-in-out ${
-                                step === 0 ? 'translate-x-1 opacity-100' : '-translate-x-full opacity-0 absolute'
+                                step === 0 ? 'translate-x-1 opacity-100' : '-translate-x-full opacity-0 absolute invisible'
                             }`}
                         >
                             <FormField
@@ -175,7 +175,7 @@ const Register = () => {
                         <div 
                             ref={step2Ref}
                             className={`transition-all duration-500 ease-in-out ${
-                                step === 1 ? 'translate-x-1 opacity-100' : 'translate-x-full opacity-0 absolute'
+                                step === 1 ? 'translate-x-1 opacity-100' : 'translate-x-full opacity-0 absolute invisible'
                             }`}
                         >
                             <FormField
