@@ -11,10 +11,14 @@ from passlib.context import CryptContext
 SECRET_KEY = config("SECRET_KEY")
 ALGORITHM = config("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = config("ACCESS_TOKEN_EXPIRE_MINUTES", cast=int)
+DATABASE_URL = config("DATABASE_URL")
 
 Base = declarative_base()
+if DATABASE_URL:
+    engine = create_engine(DATABASE_URL)
+else:
+    engine = create_engine("postgresql://nutrivana:nutrivana@localhost:5432/nutrivana")
 
-engine = create_engine("postgresql://nutrivana:nutrivana@localhost:5433/nutrivana")
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 

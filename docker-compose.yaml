@@ -1,6 +1,15 @@
 services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: "postgresql://nutrivana:nutrivana@postgres:5432/nutrivana"
+    depends_on:
+      - postgres
+    restart: always
   postgres:
-    image: postgres:17.4
+    image: postgres:16
     environment:
       POSTGRES_USER: nutrivana
       POSTGRES_PASSWORD: nutrivana
