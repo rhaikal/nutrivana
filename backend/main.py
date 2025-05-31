@@ -177,12 +177,10 @@ def get_status_nutritions(current_user: Annotated[User, Depends(get_current_user
 def get_minimum_nutrition(current_user: Annotated[User, Depends(get_current_user)]):
     id_to_nutrition = {v: k for k, v in nutrition_mapping.items()}
     results = db.query(UserMinNutritions).filter(UserMinNutritions.u_id == current_user.id).all()
-    output = []
+    output = {}
     for row in results:
-        output.append({
-            "name": id_to_nutrition.get(row.id, "unknown"),
-            "value": row.value
-        })
+        nutrition_name = id_to_nutrition.get(row.n_id, "unknown")
+        output[nutrition_name] = row.value
     return output
 
 @app.put("/update_user_nutritions")
