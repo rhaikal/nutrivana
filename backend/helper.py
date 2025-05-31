@@ -181,6 +181,9 @@ NUTRITION_FEATURES = ["calcium", "carbohydrate", "energy", "iron", "protein", "f
 
 vectorizer = TfidfVectorizer()
 ingredients = db.query(Ingredients).all()
-ingredients = [ingredient.name for ingredient in ingredients]
+ingredients_name = [ingredient.name for ingredient in ingredients]
+ingredients_id = [ingredient.id for ingredient in ingredients]
 
-INGREDIENT_VECTORIZED = vectorizer.fit_transform(ingredients)
+INGREDIENT_VECTORIZED = vectorizer.fit_transform(ingredients_name)
+
+id_to_index = {id_: idx for idx, id_ in enumerate(ingredients_id)}
