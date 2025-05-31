@@ -14,7 +14,14 @@ export function UserProvider({ children }) {
       const fetchUserData = async () => {
         try {
           const nutritionStatus = await UserModule.getCurrentNutritionStatus();
-          setUser({ nutritionStatus });
+          const minimumNutritions = await UserModule.getCurrentMinimumNutritions();
+          const intakeNutritions = await UserModule.getCurrentIntakeNutritions();
+          
+          setUser({
+            nutritionStatus,
+            minimumNutritions: minimumNutritions,
+            intakeNutritions
+          });
         } catch (error) {
           console.error('Error fetching user data:', error);
           if (error.status === 401) {

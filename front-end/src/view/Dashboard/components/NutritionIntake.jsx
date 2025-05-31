@@ -1,13 +1,19 @@
 import PropTypes from 'prop-types';
+import { useContext } from 'react';
+import UserContext from '../../../contexts/UserContext';
 import { initialNutrition } from '../../../utils/initialState';
 
 const NutrientStat = ({ label, value, minimum }) => {
-    const percentage = minimum === 0 ? 0 : (value / minimum) * 100;
+    const safeValue = value || 0;
+    const safeMinimum = minimum || 0;
+    const percentage = safeMinimum === 0 ? 0 : (safeValue / safeMinimum) * 100;
 
     let color = 'text-base';
-    if (percentage > 0) color = 'text-error';
+    if (percentage >= 0) color = 'text-error';
     if (percentage > 33) color = 'text-warning';
     if (percentage > 66) color = 'text-success';
+    if (percentage > 133) color = 'text-warning';
+    if (percentage > 166) color = 'text-error';
 
     return (
         <div className={`stats bg-base-100 w-full overflow-hidden ${color}`}>
@@ -21,10 +27,8 @@ const NutrientStat = ({ label, value, minimum }) => {
                         {percentage.toFixed(1)}
                     </div>
                 </div>
-                
                 <div className="stat-title text-lg font-extrabold">{label}</div>
-                
-                <div className="stat-value">{value}<span className="text-sm">/{minimum}</span></div>
+                <div className="stat-value">{safeValue.toFixed(2)}<span className="text-sm">/{safeMinimum.toFixed(2)}</span></div>
             </div>
         </div>
     );
@@ -36,11 +40,12 @@ NutrientStat.propTypes = {
     minimum: PropTypes.number.isRequired
 };
 
-const NutritionIntake = ({ intake, minimum, className, isLoading }) => {
+const NutritionIntake = ({ intake, className, isLoading }) => {
+    const { user } = useContext(UserContext);
     const nutrients = [
         { label: 'Energy', prop: 'energy' },
         { label: 'Protein', prop: 'protein' },
-        { label: 'Total Fat', prop: 'total_fat' },
+        { label: 'Total Fat', prop: 'fat' },
         { label: 'Carbohydrate', prop: 'carbohydrate' },
         { label: 'Calcium', prop: 'calcium' },
         { label: 'Iron', prop: 'iron' }
@@ -55,8 +60,8 @@ const NutritionIntake = ({ intake, minimum, className, isLoading }) => {
                     <NutrientStat
                         key={nutrient.prop}
                         label={nutrient.label}
-                        value={intake[nutrient.prop]}
-                        minimum={minimum[nutrient.prop]}
+                        value={intake ? intake[nutrient.prop] : user?.intakeNutritions[nutrient.prop]}
+                        minimum={user?.minimumNutritions[nutrient.prop]}
                     />
             ))}
         </div>
@@ -65,16 +70,14 @@ const NutritionIntake = ({ intake, minimum, className, isLoading }) => {
 
 NutritionIntake.propTypes = {
     intake: PropTypes.objectOf(PropTypes.number),
-    minimum: PropTypes.objectOf(PropTypes.number),
     className: PropTypes.string,
-    isLoading: PropTypes.bool
+    isLoading: PropTypes.bool,
 };
 
 NutritionIntake.defaultProps = {
     intake: initialNutrition,
-    minimum: initialNutrition,
     className: '',
     isLoading: false
-};
+}
 
 export default NutritionIntake;

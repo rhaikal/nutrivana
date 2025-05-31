@@ -7,6 +7,20 @@ const getCurrentNutritionStatus = () => {
         .catch(handleError);
 };
 
+const getCurrentMinimumNutritions = () => {
+    return UserService.getCurrentMinimumNutritions()
+        .then(handleResponse)
+        .catch(handleError);
+};
+
+const getCurrentIntakeNutritions = () => {
+    return UserService.getCurrentIntakeNutritions()
+        .then(handleResponse)
+        .catch(handleError);
+}
+
 export default {
-    getCurrentNutritionStatus
+    getCurrentNutritionStatus,
+    getCurrentMinimumNutritions,
+    getCurrentIntakeNutritions
 };

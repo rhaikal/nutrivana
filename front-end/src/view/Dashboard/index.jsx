@@ -10,7 +10,6 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
-import { initialNutrition } from "../../utils/initialState";
 import NutritionIntake from './components/NutritionIntake';
 import NutritionStatus from "./components/NutritionStatus";
 import { FoodItem, FoodList } from "./components/FoodList";
@@ -48,8 +47,6 @@ const Dashboard = () => {
         weight: [4.2, 5.1, 6.3, 7.2, 7.8, 8.2, 8.6, 8.9, 9.2, 9.4, 9.7, 10.0],
         height: [52.3, 55.8, 59.4, 62.1, 64.3, 66.1, 67.8, 69.2, 70.6, 71.9, 73.1, 74.3]
     });
-    const [intake, setIntake] = useState(initialNutrition);
-    const [minimum, setMinimum] = useState(initialNutrition)
     const [recommendedFoods, setRecommendedFoods] = useState([]);
     const [eatenFoods, setEatenFoods] = useState([]);
     const [selectedFood, setSelectedFood] = useState({});
@@ -63,7 +60,7 @@ const Dashboard = () => {
         <button 
             className="btn btn-primary btn-sm" 
             disabled={isInitialLoad} 
-            onClick={() => foodModal.current.showModal()}
+            onClick={() => foodModal.current.setIsOpen(true)}
         >
             Add Food
         </button>
@@ -109,23 +106,6 @@ const Dashboard = () => {
 
             try {
                 await Promise.all([
-                    setIntake({
-                        energy: 100,
-                        protein: 8,
-                        total_fat: 3,
-                        carbohydrate: 150,
-                        calcium: 300,
-                        iron: 0.5
-                    }),
-
-                    setMinimum({
-                        energy: 1350,
-                        protein: 20,
-                        total_fat: 45,
-                        carbohydrate: 215,
-                        calcium: 650,
-                        iron: 7
-                    }),
                     fetchRecommendedFoods(),
                     fetchEatenFoods()
                 ]);
@@ -172,9 +152,7 @@ const Dashboard = () => {
                 <div className={rightColumnSpan}>
                     <div className="flex flex-col h-full">                       
                         <DashboardSection className="flex-grow">
-                            <NutritionIntake 
-                                intake={intake}
-                                minimum={minimum}
+                            <NutritionIntake
                                 isLoading={isInitialLoad}
                             />
                         </DashboardSection>
