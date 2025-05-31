@@ -1,20 +1,12 @@
-import FoodService from "../services/food.service"
+import FoodService from "../services/food.service";
+import { handleResponse, handleError } from "../utils/api";
 
-const getFoods = async () => {
-    return FoodService.list().then(
-        (response) => {
-            return Promise.resolve(response.data, response.data.message);
-        },
-        (error) => {
-            const message =
-                (error.response && error.response.data && error.response.data.message) ||
-                error.message ||
-                error.toString();
-            return Promise.reject({status: error.response.status, message});
-        },
-    );
-}
+const getFoods = () => {
+    return FoodService.list()
+        .then(handleResponse)
+        .catch(handleError);
+};
 
 export default {
     getFoods
-}
+};

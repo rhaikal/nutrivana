@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react"
+import { useContext, useEffect, useRef, useState, useMemo } from "react"
 import { EllipsisHorizontalIcon } from "@heroicons/react/24/solid"
 import {
   Chart as ChartJS,
@@ -43,25 +43,20 @@ const Dashboard = () => {
     const isDesktop = useMediaQuery('(min-width: 1024px)');
 
     const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [chartData] = useState({
+        weight: [4.2, 5.1, 6.3, 7.2, 7.8, 8.2, 8.6, 8.9, 9.2, 9.4, 9.7, 10.0],
+        height: [52.3, 55.8, 59.4, 62.1, 64.3, 66.1, 67.8, 69.2, 70.6, 71.9, 73.1, 74.3]
+    });
     const [intake, setIntake] = useState(initialNutrition);
-    const [minimum, setMinimum] = useState(initialNutrition);
-    const [dailyHistories] = useState(['test']);
+    const [minimum, setMinimum] = useState(initialNutrition)
+    const [recommendedFoods, setRecommendedFoods] = useState([]);
+    const [eatenFoods, setEatenFoods] = useState([]);
+    const [selectedFood, setSelectedFood] = useState({});
 
-    const getTopSectionLayout = () => {
-        if (isDesktop) {
-            return 'grid-cols-3';
-        } else {
-            return 'grid-cols-1';
-        }
-    };
-
-    const getBottomSectionLayout = () => {
-        if (isDesktop) {
-            return 'grid-cols-2';
-        } else {
-            return 'grid-cols-1';
-        }
-    };
+    const topSectionLayout = useMemo(() => isDesktop ? 'grid-cols-3' : 'grid-cols-1', [isDesktop]);
+    const bottomSectionLayout = useMemo(() => isDesktop ? 'grid-cols-2' : 'grid-cols-1', [isDesktop]);
+    const columnSpan = useMemo(() => isDesktop || isTablet ? 'col-span-1 self-center' : 'col-span-full', [isDesktop, isTablet]);
+    const rightColumnSpan = useMemo(() => isDesktop ? 'col-span-2' : isTablet ? 'col-span-1' : 'col-span-full', [isDesktop, isTablet]);
 
     const AddFoodButton = () => (
         <button 
@@ -73,8 +68,14 @@ const Dashboard = () => {
         </button>
     );
     
+    const handleClickFoodItem = (selectedItem) => {
+        setSelectedFood(selectedItem)
+        detailModal.current.showModal()
+    }
+
     useEffect(() => {
-        // fetch intake (WIP)
+        setIsInitialLoad(true)
+
         setIntake({
             energy: 100,
             protein: 8,
@@ -84,7 +85,6 @@ const Dashboard = () => {
             iron: 0.5
         })
 
-        // fetch Minimum
         setMinimum({
             energy: 1350,
             protein: 20,
@@ -93,6 +93,42 @@ const Dashboard = () => {
             calcium: 650,
             iron: 7
         })
+
+        setRecommendedFoods([{
+            name: "Baby Toddler cereal, rice with fruit, ready-to-eat",
+            ingredients: [
+                'Babyfood, water, bottled, GERBER, without added fluoride', 
+                'Babyfood, cereal, rice, dry fortified', 
+                'Sugars, granulated', 
+                'Flour, rice, white, unenriched',
+                'Baby Toddler fruit, NFS'
+            ],
+            energy: 130,
+            protein: 2.5,
+            fat: 0.5,
+            carbohydrate: 28,
+            calcium: 10,
+            iron: 0.4
+        }])
+
+        setEatenFoods([{
+            name: "Baby Toddler cereal, oatmeal with fruit, ready-to-eat",
+            ingredients: [
+                'Babyfood, water, bottled, GERBER, without added fluoride', 
+                'Babyfood, cereal, oatmeal, dry fortified', 
+                'Cereals, oats, regular and quick, not fortified, dry', 
+                'Sugars, granulated', 
+                'Baby Toddler fruit, NFS'
+            ],
+            energy: 100,
+            protein: 3.5,
+            fat: 3,
+            carbohydrate: 15,
+            calcium: 120,
+            iron: 0.5
+        }])
+
+        setIsInitialLoad(false)
     }, [])
 
     useEffect(() => {
@@ -101,8 +137,8 @@ const Dashboard = () => {
 
     return (
         <div className="container mx-auto">
-            <div className={`grid ${getTopSectionLayout()} gap-4 p-4`}>
-                <div className={`${isDesktop || isTablet ? 'col-span-1 self-center' : 'col-span-full'}`}>
+            <div className={`grid ${topSectionLayout} gap-4 p-4`}>
+                <div className={columnSpan}>
                     <div className="navbar bg-base-100 shadow-sm rounded-box pb-4 mb-3">
                         <div className="flex-1">
                             <a className="btn btn-ghost text-xl">Nutrivana</a>
@@ -125,7 +161,7 @@ const Dashboard = () => {
                     </DashboardSection>
                 </div>
 
-                <div className={`${isDesktop ? 'col-span-2' : isTablet ? 'col-span-1' : 'col-span-full'}`}>
+                <div className={rightColumnSpan}>
                     <div className="flex flex-col h-full">                       
                         <DashboardSection className="flex-grow">
                             <NutritionIntake 
@@ -138,20 +174,17 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div className={`grid ${getBottomSectionLayout()} gap-4 px-4 pb-4`}>
-                <DashboardSection title="Growth Chart">
+            <div className={`grid ${bottomSectionLayout} gap-4 px-4 pb-4`}>
+                <DashboardSection title="Growth Chart" className='max-h-fit'>
                     <LineChart 
-                        data={{
-                            weight: [4.2, 5.1, 6.3, 7.2, 7.8, 8.2, 8.6, 8.9, 9.2, 9.4, 9.7, 10.0],
-                            height: [52.3, 55.8, 59.4, 62.1, 64.3, 66.1, 67.8, 69.2, 70.6, 71.9, 73.1, 74.3]                    
-                        }}
+                        data={chartData}
                         isLoading={isInitialLoad}
                     />
                 </DashboardSection>
 
-                <div className={`grid grid-cols-1 gap-4`}>
+                <div className="grid grid-cols-1 gap-4">
                     <DashboardSection title="Recommended Foods">
-                        { dailyHistories.length === 0 ?
+                        {recommendedFoods.length === 0 ?
                             isInitialLoad ? 
                                 <div className='skeleton h-full w-full'/> 
                                 : 
@@ -161,64 +194,48 @@ const Dashboard = () => {
                                 </div>                                               
                             :
                             <FoodList className='py-2'>
-                                <FoodItem 
-                                    food={{
-                                        name: "Baby Toddler cereal, rice with fruit, ready-to-eat",
-                                        energy: 130,
-                                        protein: 2.5,
-                                        fat: 0.5,
-                                        carbohydrate: 28,
-                                        calcium: 10,
-                                        iron: 0.4
-                                    }}
-                                    isLoading={isInitialLoad}
-                                />
+                                { recommendedFoods.map((recommendedFood) => (
+                                    <FoodItem 
+                                        food={recommendedFood}
+                                        onClick={() => handleClickFoodItem(recommendedFood)}
+                                        isLoading={isInitialLoad}
+                                    />
+                                ))
+                                }
                             </FoodList>
                         }
                     </DashboardSection>
 
                     <DashboardSection 
                         title="Today's Eaten Foods" 
-                        action={dailyHistories.length > 0 ? <AddFoodButton /> : null}
+                        action={eatenFoods.length > 0 ? <AddFoodButton /> : null}
                     >
-                        { dailyHistories.length === 0 ?
+                        {eatenFoods.length === 0 ?
                             isInitialLoad ? 
                                 <div className='skeleton h-full w-full'/> 
                                 : 
                                 <div className="flex flex-col items-center gap-4">
                                     <h1 className="text-3xl font-bold text-neutral">No Food History</h1>
-                                    <button className="btn btn-primary" onClick={() => foodModal.current.showModal()}>Add Food</button>
+                                    <AddFoodButton />
                                 </div>                            
                             :
                             <FoodList className='py-2'>
-                                <FoodItem
-                                    food={{
-                                        name: "Baby Toddler cereal, oatmeal with fruit, ready-to-eat",
-                                        energy: 100,
-                                        protein: 3.5,
-                                        fat: 3,
-                                        carbohydrate: 15,
-                                        calcium: 120,
-                                        iron: 0.5
-                                    }}
-                                    onClick={()=>detailModal.current.showModal()}
-                                    isLoading={isInitialLoad}
-                                />
+                                {eatenFoods.map((eatenFood) => (
+                                    <FoodItem
+                                        food={eatenFood}
+                                        onClick={() => handleClickFoodItem(eatenFood)}
+                                        isLoading={isInitialLoad}
+                                    />
+                                ))}
                             </FoodList>
                         }
                     </DashboardSection>
                 </div>
             </div>
 
-            <DetailModal ref={detailModal} />
+            <DetailModal food={selectedFood} ref={detailModal} />
             <FoodModal ref={foodModal} />
-            <GrowthModal 
-                ref={growthModal} 
-                onSubmit={(data) => {
-                    console.log('Growth data:', data);
-                    // Handle the growth data here
-                }}
-            />
+            <GrowthModal ref={growthModal} />
         </div>
     )
 }

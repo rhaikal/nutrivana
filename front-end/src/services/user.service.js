@@ -1,12 +1,9 @@
-import { authorizedHeader, axiosInstance } from '../utils/api';
+import { axiosInstance, getAuthHeader } from '../utils/api';
 
-const getCurrentNutritionStatus = async () => {
-    return axiosInstance.get(
-        'get_status_nutritions',
-        { headers: authorizedHeader() }
-    );
-}
+const getCurrentNutritionStatus = () => {
+    return axiosInstance.get('get_status_nutritions', { headers: getAuthHeader() });
+};
 
 export default {
     getCurrentNutritionStatus
-}
+};

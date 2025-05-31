@@ -1,4 +1,6 @@
-import Swal from 'sweetalert2'
-import withReactContent from 'sweetalert2-react-content'
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 
-export default withReactContent(Swal)
+const SwalWithReact = withReactContent(Swal);
+
+export default SwalWithReact;

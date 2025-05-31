@@ -1,12 +1,9 @@
-import { axiosInstance, authorizedHeader } from "../utils/api";
+import { axiosInstance, getAuthHeader } from "../utils/api";
 
-const list = async () => {
-    return axiosInstance.get(
-        'foods',
-        { headers: authorizedHeader() }
-    );
-}
+const list = () => {
+    return axiosInstance.get('foods', { headers: getAuthHeader() });
+};
 
 export default {
     list
-}
+};

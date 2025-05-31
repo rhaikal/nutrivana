@@ -1,25 +1,19 @@
 import axios from 'axios';
 import { axiosInstance, API_URL } from '../utils/api';
 
-const login = async (payload) => {
+const login = (credentials) => {
     const formData = new URLSearchParams();
-    formData.append('username', payload.username);
-    formData.append('password', payload.password);
+    formData.append('username', credentials.username);
+    formData.append('password', credentials.password);
     
-    return axios.post(
-        `${API_URL}login`,
-        formData
-    ) 
-}
+    return axios.post(`${API_URL}login`, formData);
+};
 
-const register = async (payload) => {
-    return axiosInstance.post(
-        `register`,
-        payload
-    );
+const register = (userData) => {
+    return axiosInstance.post('register', userData);
 };
 
 export default {
     login,
     register
-}
+};

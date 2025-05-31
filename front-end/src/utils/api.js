@@ -10,14 +10,21 @@ const axiosInstance = axios.create({
     }
 });
 
-const authorizedHeader = () => {
+const getAuthHeader = () => {
     const token = localStorage.getItem('access_token');
-    if (token) {
-        return {
-            Authorization: `Bearer ${token}`,
-        };
-    }
-    return {};
+    return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-export { axiosInstance, authorizedHeader, API_URL };
+const handleResponse = (response) => {
+    return Promise.resolve(response.data);
+};
+
+const handleError = (error) => {
+    const message =
+        (error.response?.data?.message) ||
+        error.message ||
+        error.toString();
+    return Promise.reject({ status: error.response?.status, message });
+};
+
+export { axiosInstance, getAuthHeader, API_URL, handleResponse, handleError };

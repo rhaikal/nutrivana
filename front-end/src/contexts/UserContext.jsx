@@ -8,23 +8,28 @@ export function UserProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const nutritionStatus = await UserModule.getCurrentNutritionStatus();
-        setUser({ nutritionStatus });
-      } catch (error) {
-        console.log(error)
-        if (error.status === 401) {
-          localStorage.removeItem('access_token');
-          window.location.reload();
-        }
-        console.error('Error fetching user data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    const accessToken = localStorage.getItem('access_token');
 
-    fetchUserData();
+    if (accessToken) {
+      const fetchUserData = async () => {
+        try {
+          const nutritionStatus = await UserModule.getCurrentNutritionStatus();
+          setUser({ nutritionStatus });
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          if (error.status === 401) {
+            localStorage.removeItem('access_token');
+            window.location.reload();
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      };
+  
+      fetchUserData();
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
   return (

@@ -1,11 +1,21 @@
-import { forwardRef } from "react";
+import { forwardRef } from 'react';
+import PropTypes from 'prop-types';
 
-const DetailModal = forwardRef((props, ref) => {
+const DetailModalComponent = ({ food }, ref) => {
     return (
-        <dialog ref={ref} id='detail_modal' className="modal">
+        <dialog ref={ref} id="detail_modal" className="modal">
             <div className="modal-box w-11/12 max-w-5xl">
-                <h3 className="font-bold text-2xl text-info pb-3">Baby Toddler cereal, oatmeal with fruit, ready-to-eat</h3>
-                <div className='grid grid-cols-1 lg:grid-cols-5 gap-4 px-6'>
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 px-6">
+                    <div className='col-span-full'>
+                        <table className="table">
+                            <tbody>
+                                <tr>
+                                    <td className="font-semibold text-lg w-36">Food Name : </td>
+                                    <td className="text-lg">{food.name}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                     <div className="col-span-2">
                         <div className="card card-border border-base-300 bg-base-100">
                             <div className="card-body">
@@ -22,32 +32,32 @@ const DetailModal = forwardRef((props, ref) => {
                                         <tbody>
                                             <tr>
                                                 <td>Energy</td>
-                                                <td>100</td>
+                                                <td>{food.energy}</td>
                                                 <td>kcal</td>
                                             </tr>
                                             <tr>
                                                 <td>Protein</td>
-                                                <td>3.5</td>
+                                                <td>{food.protein}</td>
                                                 <td>g</td>
                                             </tr>
                                             <tr>
                                                 <td>Fat</td>
-                                                <td>3</td>
+                                                <td>{food.fat}</td>
                                                 <td>g</td>
                                             </tr>
                                             <tr>
                                                 <td>Carbohydrate</td>
-                                                <td>15</td>
+                                                <td>{food.carbohydrate}</td>
                                                 <td>g</td>
                                             </tr>
                                             <tr>
                                                 <td>Calcium</td>
-                                                <td>120</td>
+                                                <td>{food.calcium}</td>
                                                 <td>mg</td>
                                             </tr>
                                             <tr>
                                                 <td>Iron</td>
-                                                <td>0.5</td>
+                                                <td>{food.iron}</td>
                                                 <td>mg</td>
                                             </tr>
                                         </tbody>
@@ -65,26 +75,14 @@ const DetailModal = forwardRef((props, ref) => {
                                         <thead>
                                             <tr>
                                                 <th>Name</th>
-                                                <th>Amount (g)</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
-                                                <td>Rice</td>
-                                                <td>100</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Minced Chicken</td>
-                                                <td>1</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Carrot</td>
-                                                <td>1</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Garlic</td>
-                                                <td>1</td>
-                                            </tr>
+                                            {food?.ingredients?.map((ingredient) => (
+                                                <tr key={ingredient}>
+                                                    <td>{ingredient}</td>
+                                                </tr>
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
@@ -99,7 +97,10 @@ const DetailModal = forwardRef((props, ref) => {
                 </div>
             </div>
         </dialog>
-    )
-});
+    );
+};
+
+const DetailModal = forwardRef(DetailModalComponent);
+DetailModal.displayName = 'DetailModal';
 
 export default DetailModal;

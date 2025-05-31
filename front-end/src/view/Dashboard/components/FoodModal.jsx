@@ -1,31 +1,32 @@
-import { forwardRef, useEffect, useState, useMemo, useCallback } from "react"
-import NutritionIntake from "./NutritionIntake"
-import { FoodItemInput, FoodList, InfiniteScrollTrigger } from "./FoodList"
-import { MagnifyingGlassIcon } from "@heroicons/react/24/solid"
-import FoodModule from "../../../modules/FoodModule"
+import { forwardRef, useEffect, useState, useMemo, useCallback } from 'react';
+import PropTypes from 'prop-types';
+import NutritionIntake from './NutritionIntake';
+import { FoodItemInput, FoodList, InfiniteScrollTrigger } from './FoodList';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/solid';
+import FoodModule from '../../../modules/FoodModule';
 
-const FoodModal = forwardRef((props, ref) => {
-    const [foods, setFoods] = useState([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [searchQuery, setSearchQuery] = useState("")
-    const [selectedFoods, setSelectedFoods] = useState([])
-    const [visibleCount, setVisibleCount] = useState(5)
-    const [isLoadingMore, setIsLoadingMore] = useState(false)
+const FoodModalComponent = ({ onSave = () => {} }, ref) => {
+    const [foods, setFoods] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedFoods, setSelectedFoods] = useState([]);
+    const [visibleCount, setVisibleCount] = useState(5);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     
     const resetState = () => {
-        setSearchQuery("");
+        setSearchQuery('');
         setSelectedFoods([]);
         setVisibleCount(5);
     };
 
     const filteredFoods = useMemo(() => {
-        if (!searchQuery.trim()) return foods
+        if (!searchQuery.trim()) return foods;
         
-        const query = searchQuery.toLowerCase()
+        const query = searchQuery.toLowerCase();
         return foods.filter(food => 
             food.name.toLowerCase().includes(query)
-        )
-    }, [foods, searchQuery])
+        );
+    }, [foods, searchQuery]);
     
     const visibleFoods = useMemo(() => {
         const sortedFoods = [...filteredFoods].sort((a, b) => {
@@ -35,7 +36,7 @@ const FoodModal = forwardRef((props, ref) => {
         });
         
         return sortedFoods.slice(0, visibleCount);
-    }, [filteredFoods, visibleCount, selectedFoods])
+    }, [filteredFoods, visibleCount, selectedFoods]);
     
     const totalNutrition = useMemo(() => {
         const initialValues = {
@@ -45,78 +46,73 @@ const FoodModal = forwardRef((props, ref) => {
             carbohydrate: 0,
             calcium: 0,
             iron: 0
-        }
+        };
         
-        return selectedFoods.reduce((total, food) => {
-            return {
-                energy: total.energy + (food.energy || 0),
-                protein: total.protein + (food.protein || 0),
-                total_fat: total.total_fat + (food.fat || 0),
-                carbohydrate: total.carbohydrate + (food.carbohydrate || 0),
-                calcium: total.calcium + (food.calcium || 0),
-                iron: total.iron + (food.iron || 0)
-            }
-        }, initialValues)
-    }, [selectedFoods])
+        return selectedFoods.reduce((total, food) => ({
+            energy: total.energy + (food.energy || 0),
+            protein: total.protein + (food.protein || 0),
+            total_fat: total.total_fat + (food.fat || 0),
+            carbohydrate: total.carbohydrate + (food.carbohydrate || 0),
+            calcium: total.calcium + (food.calcium || 0),
+            iron: total.iron + (food.iron || 0)
+        }), initialValues);
+    }, [selectedFoods]);
     
     const handleFoodToggle = useCallback((food) => {
         const isSelected = selectedFoods.some(f => f.id === food.id);
         
-        if (!isSelected) {
-            setTimeout(() => {
-                setSelectedFoods(prev => [...prev, food]);
-            }, 300);
-        } else {
-            setTimeout(() => {
-                setSelectedFoods(prev => prev.filter(f => f.id !== food.id));
-            }, 300);
-        }
-    }, [selectedFoods])
+        setTimeout(() => {
+            setSelectedFoods(prev => 
+                isSelected 
+                    ? prev.filter(f => f.id !== food.id)
+                    : [...prev, food]
+            );
+        }, 300);
+    }, [selectedFoods]);
     
     const handleSearchChange = useCallback((e) => {
-        setSearchQuery(e.target.value)
-    }, [])
+        setSearchQuery(e.target.value);
+    }, []);
     
     const handleSave = useCallback(() => {
-        console.log("Selected foods:", selectedFoods)
-        // if (props.onSave) {
-        //     props.onSave(selectedFoods)
-        // }
-    }, [selectedFoods])
+        console.log('Selected foods:', selectedFoods);
+        if (onSave) {
+            onSave(selectedFoods);
+        }
+    }, [selectedFoods, onSave]);
     
     const loadMore = useCallback(() => {
-        if (visibleCount >= filteredFoods.length) return
+        if (visibleCount >= filteredFoods.length) return;
         
-        setIsLoadingMore(true)
+        setIsLoadingMore(true);
         setTimeout(() => {
-            setVisibleCount(prev => Math.min(prev + 5, filteredFoods.length))
-            setIsLoadingMore(false)
-        }, 300)
-    }, [filteredFoods.length, visibleCount])
-
+            setVisibleCount(prev => Math.min(prev + 5, filteredFoods.length));
+            setIsLoadingMore(false);
+        }, 300);
+    }, [filteredFoods.length, visibleCount]);
     
     useEffect(() => {
         const fetchFoods = async () => {
-            setIsLoading(true)
+            setIsLoading(true);
             try {
-                const res = await FoodModule.getFoods()
-                setFoods(res)
+                const res = await FoodModule.getFoods();
+                setFoods(res);
             } catch (err) {
-                console.error("Failed to fetch foods:", err)
+                console.error('Failed to fetch foods:', err);
             } finally {
-                setIsLoading(false)
+                setIsLoading(false);
             }
-        }
+        };
         
-        fetchFoods()
-    }, [])
+        fetchFoods();
+    }, []);
     
     useEffect(() => {
-        setVisibleCount(5)
-    }, [searchQuery])
+        setVisibleCount(5);
+    }, [searchQuery]);
 
     return (
-        <dialog ref={ref} id='form_modal' className="modal" onClose={resetState}>
+        <dialog ref={ref} id="form_modal" className="modal" onClose={resetState}>
             <div className="modal-box w-11/12 max-w-5xl">
                 <div className="card border border-base-300 mb-3">
                     <div className="card-body">
@@ -141,6 +137,7 @@ const FoodModal = forwardRef((props, ref) => {
                         <FoodList maxHeight={150}>
                             {selectedFoods.map(food => (
                                 <FoodItemInput
+                                    key={food.id}
                                     food={food}
                                     checked={true}
                                     onChange={() => handleFoodToggle(food)}
@@ -180,6 +177,7 @@ const FoodModal = forwardRef((props, ref) => {
                                     .filter(food => !selectedFoods.some(f => f.id === food.id))
                                     .map(food => (
                                         <FoodItemInput
+                                            key={food.id}
                                             food={food}
                                             checked={false}
                                             onChange={() => handleFoodToggle(food)}
@@ -211,7 +209,14 @@ const FoodModal = forwardRef((props, ref) => {
                 </div>
             </div>
         </dialog>
-    )
-})
+    );
+};
 
-export default FoodModal
+FoodModalComponent.propTypes = {
+    onSave: PropTypes.func
+};
+
+const FoodModal = forwardRef(FoodModalComponent);
+FoodModal.displayName = 'FoodModal';
+
+export default FoodModal;

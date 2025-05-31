@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 
-const GrowthModal = forwardRef((props, ref) => {
+const GrowthModalComponent = (props, ref) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     ref.current.close();
@@ -15,6 +15,7 @@ const GrowthModal = forwardRef((props, ref) => {
                 <label className="input input-bordered w-full max-w-none items-center gap-2">
                     <input 
                         type="number" 
+                        name="weight"
                         className="grow"
                         step="0.1"
                         min="0"
@@ -28,6 +29,7 @@ const GrowthModal = forwardRef((props, ref) => {
                 <label className="input input-bordered w-full max-w-none items-center gap-2">
                     <input 
                         type="number"
+                        name="height"
                         className="grow"
                         step="0.1"
                         min="0"
@@ -44,6 +46,9 @@ const GrowthModal = forwardRef((props, ref) => {
       </div>
     </dialog>
   );
-});
+};
+
+const GrowthModal = forwardRef(GrowthModalComponent);
+GrowthModal.displayName = 'GrowthModal';
 
 export default GrowthModal;

@@ -2,28 +2,31 @@ import PropTypes from 'prop-types';
 import { forwardRef, useEffect, useRef } from 'react';
 
 export const FoodItem = ({ food, onClick, isLoading }) => {
-  return ( isLoading ? 
-      <div className="skeleton min-h-[105.5px]" />
+  return isLoading ? 
+    <div className="skeleton min-h-[105.5px]" />
     :
-      <li className="list-row items-center-safe justify-between border-2 border-base-200 cursor-pointer hover:bg-base-300" onClick={onClick}>
-        <div>
-          <div className="badge badge-soft badge-info !border-blue-300 !rounded-box">{food.name}</div>
-          <div className="flex gap-2 pt-2 text-accent text-sm opacity-60">
-            <span>Energy: {food.energy}</span>
-            -
-            <span>Protein: {food.protein}</span>
-            -
-            <span>Total Fat: {food.fat}</span>
-            -
-            <span>Carbohydrate: {food.carbohydrate}</span>
-            -
-            <span>Calcium: {food.calcium}</span>
-            -
-            <span>Iron: {food.iron}</span>
-          </div>
+    <li className="list-row items-center-safe justify-between border-2 border-base-200 cursor-pointer hover:bg-base-300" onClick={onClick}>
+      <div>
+        <div className="badge badge-soft badge-info !border-blue-300 !rounded-box">
+          <span className='max-w-96 truncate'>
+            {food.name}
+          </span>
         </div>
-      </li>
-  );
+        <div className="flex gap-2 pt-2 text-accent text-sm opacity-60">
+          <span>Energy: {food.energy}</span>
+          -
+          <span>Protein: {food.protein}</span>
+          -
+          <span>Total Fat: {food.fat}</span>
+          -
+          <span>Carbohydrate: {food.carbohydrate}</span>
+          -
+          <span>Calcium: {food.calcium}</span>
+          -
+          <span>Iron: {food.iron}</span>
+        </div>
+      </div>
+    </li>;
 };
 
 FoodItem.propTypes = {
@@ -47,7 +50,7 @@ FoodItem.defaultProps = {
 
 export const FoodItemInput = ({ food, checked, onChange, className = '' }) => {
   return (
-    <div className='transition-all duration-300 ease-out animate-fade-in'>
+    <div className="transition-all duration-300 ease-out animate-fade-in">
       <li 
         onClick={onChange} 
         className={`list-row items-center-safe justify-between border-2 ${checked ? 'border-blue-300' : 'border-base-200'} cursor-pointer hover:bg-base-300 ${className}`}
@@ -142,7 +145,7 @@ InfiniteScrollTrigger.defaultProps = {
   isLoading: false
 };
 
-export const FoodList = forwardRef(({ children, className, maxHeight }, ref) => {
+const FoodListComponent = ({ children, className, maxHeight }, ref) => {
   const style = maxHeight ? { maxHeight: `${maxHeight}px`, overflowY: 'auto' } : {};
   
   return (
@@ -152,4 +155,13 @@ export const FoodList = forwardRef(({ children, className, maxHeight }, ref) => 
       </ul>
     </div>
   );
-});
+};
+
+FoodListComponent.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string,
+  maxHeight: PropTypes.number
+};
+
+export const FoodList = forwardRef(FoodListComponent);
+FoodList.displayName = 'FoodList';

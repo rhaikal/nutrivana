@@ -1,8 +1,8 @@
-import PropTypes from 'prop-types'
-import { Line } from "react-chartjs-2"
+import PropTypes from 'prop-types';
+import { Line } from 'react-chartjs-2';
 
-const LineChart = ({data, isLoading}) => {
-    const dataOptions = {
+const LineChart = ({ data, isLoading }) => {
+    const chartData = {
         labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
         datasets: [
             {
@@ -37,22 +37,23 @@ const LineChart = ({data, isLoading}) => {
         },
     };
 
-    return isLoading ? <div className='skeleton h-full' /> : <Line data={dataOptions} options={options} />
+    return isLoading ? <div className="skeleton h-full" /> : <Line data={chartData} options={options} />;
+};
 
-}
 LineChart.propTypes = {
     data: PropTypes.shape({
         weight: PropTypes.arrayOf(PropTypes.number),
         height: PropTypes.arrayOf(PropTypes.number)
     }),
     isLoading: PropTypes.bool
-}
+};
+
 LineChart.defaultProps = {
     data: {
         weight: [],
         height: []
     },
     isLoading: false
-}
+};
 
 export default LineChart;

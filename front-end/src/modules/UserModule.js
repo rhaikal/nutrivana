@@ -1,20 +1,12 @@
-import UserService from "../services/user.service"
+import UserService from "../services/user.service";
+import { handleResponse, handleError } from "../utils/api";
 
 const getCurrentNutritionStatus = () => {
-    return UserService.getCurrentNutritionStatus().then(
-        (response) => {
-            return Promise.resolve(response.data, response.data.message);
-        },
-        (error) => {
-            const message =
-                (error.response && error.response.data && error.response.data.message) ||
-                error.message ||
-                error.toString();
-            return Promise.reject({status: error.response.status, message});
-        },
-    );
-}
+    return UserService.getCurrentNutritionStatus()
+        .then(handleResponse)
+        .catch(handleError);
+};
 
 export default {
     getCurrentNutritionStatus
-}
+};
