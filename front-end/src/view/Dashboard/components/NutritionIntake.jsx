@@ -46,10 +46,10 @@ const NutritionIntake = ({intake, minimum, className, isLoading}) => {
     ];
 
     return (
-        <div className={`card bg-base-100 card-border border-base-200 grid grid-flow-col grid-rows-6 sm:grid-rows-2 ${className}`}>
+        <div className={`card bg-base-100 card-border border-base-200 grid grid-flow-col grid-rows-6 sm:grid-rows-2 gap-3 h-full ${className}`}>
             {nutrients.map((nutrient) => (
                 isLoading ? 
-                    <div className='skeleton m-2' />
+                    <div className='skeleton w-full h-full' />
                 :
                     <CustomStats
                         key={nutrient.prop}

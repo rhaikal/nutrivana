@@ -12,9 +12,10 @@ const NutritionStatus = ({isLoading}) => {
         'good': { label: 'Optimal', bgColor: 'bg-green-100', textColor: 'text-green-400' },
         'possible risk of excessive': { label: 'High', bgColor: 'bg-yellow-100', textColor: 'text-yellow-400' },
         'excessive': { label: 'Dangerously High', bgColor: 'bg-red-100', textColor: 'text-red-400' },
+        'obese': { label: 'Dangerously High', bgColor: 'bg-red-100', textColor: 'text-red-400' },
     }
 
-    const currentStatus = status[user?.nutrition_status?.toLowerCase()] ?? status['no status'];    
+    const currentStatus = status[user?.nutritionStatus?.toLowerCase()] ?? status['no status'];    
     return (
         <div className="card bg-base-100 shadow-sm card-xl rounded-box p-3">    
             <div className={`${isLoading ? 'skeleton' : currentStatus.bgColor} card-body items-center text-center justify-center-safe`}>
