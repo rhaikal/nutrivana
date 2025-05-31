@@ -13,7 +13,7 @@ import UserContext from "../../contexts/UserContext";
 import FoodModule from "../../modules/FoodModule";
 
 const Dashboard = () => {
-    const { updateIntakeNutritions } = useContext(UserContext);
+    const { isLoading: isFetchingUsersData, updateIntakeNutritions } = useContext(UserContext);
 
     const detailModal = useRef();
     const foodModal = useRef();
@@ -136,7 +136,7 @@ const Dashboard = () => {
                     </div>
                     
                     <DashboardSection>
-                        <NutritionStatus isLoading={isInitialLoad} />
+                        <NutritionStatus isLoading={isFetchingUsersData || isInitialLoad} />
                     </DashboardSection>
                 </div>
 
@@ -144,7 +144,7 @@ const Dashboard = () => {
                     <div className="flex flex-col h-full">                       
                         <DashboardSection className="flex-grow">
                             <NutritionIntake
-                                isLoading={isInitialLoad || isFoodModalSaved}
+                                isLoading={isFetchingUsersData || isInitialLoad || isFoodModalSaved}
                             />
                         </DashboardSection>
                     </div>
@@ -154,7 +154,7 @@ const Dashboard = () => {
             <div className={`grid ${bottomSectionLayout} gap-4 px-4 pb-4`}>
                 <DashboardSection title="Growth Chart">
                     <LineChart
-                        isLoading={isInitialLoad}
+                        isLoading={isFetchingUsersData || isInitialLoad}
                     />
                 </DashboardSection>
 

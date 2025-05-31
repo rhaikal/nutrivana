@@ -25,9 +25,16 @@ const getGrowthRecords = () => {
         .catch(handleError);
 }
 
+const updateGrowthRecords = (payload) => {
+    return UserService.updateGrowthRecords(payload)
+        .then(handleResponse)
+        .catch(handleError);
+}
+
 export default {
     getCurrentNutritionStatus,
     getCurrentMinimumNutritions,
     getCurrentIntakeNutritions,
-    getGrowthRecords
+    getGrowthRecords,
+    updateGrowthRecords
 };

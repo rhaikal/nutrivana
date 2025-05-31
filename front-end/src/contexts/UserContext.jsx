@@ -13,13 +13,12 @@ export function UserProvider({ children }) {
     if (accessToken) {
       const fetchUserData = async () => {
         try {
-          const nutritionStatus = await UserModule.getCurrentNutritionStatus();
           const minimumNutritions = await UserModule.getCurrentMinimumNutritions();
           const intakeNutritions = await UserModule.getCurrentIntakeNutritions();
           const growthRecords = await UserModule.getGrowthRecords();
 
           setUser({
-            nutritionStatus,
+            nutritionStatus: growthRecords[growthRecords?.length - 1].nutrition_status,
             minimumNutritions,
             intakeNutritions,
             growthRecords: {
@@ -45,15 +44,33 @@ export function UserProvider({ children }) {
   }, []);
 
   const updateIntakeNutritions = async () => {
+    setIsLoading(true);
     const intakeNutritions = await UserModule.getCurrentIntakeNutritions();
     setUser((prevUser) => ({
       ...prevUser,
       intakeNutritions
     }));
+    setIsLoading(false);
+  };
+
+  const updateGrowthRecords = async () => {
+    setIsLoading(true);
+    const minimumNutritions = await UserModule.getCurrentMinimumNutritions();
+    const growthRecords = await UserModule.getGrowthRecords();
+    setUser((prevUser) => ({
+      ...prevUser,
+      nutritionStatus: growthRecords[growthRecords?.length - 1].nutrition_status,
+      minimumNutritions,
+      growthRecords: {
+        height: growthRecords.map((record) => record.height),
+        weight: growthRecords.map((record) => record.weight)
+      }
+    }));
+    setIsLoading(false);
   };
   
   return (
-    <UserContext.Provider value={{ user, setUser, updateIntakeNutritions, isLoading }}>
+    <UserContext.Provider value={{ user, setUser, updateIntakeNutritions, updateGrowthRecords, isLoading }}>
       {children}
     </UserContext.Provider>
   );
