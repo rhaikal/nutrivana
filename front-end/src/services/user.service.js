@@ -12,8 +12,13 @@ const getCurrentIntakeNutritions = () => {
     return axiosInstance.get('get_nutrient_current', { headers: getAuthHeader() });
 }
 
+const getGrowthRecords = () => {
+    return axiosInstance.get('track_record', { headers: getAuthHeader() });
+}
+
 export default {
     getCurrentNutritionStatus,
     getCurrentMinimumNutritions,
-    getCurrentIntakeNutritions
+    getCurrentIntakeNutritions,
+    getGrowthRecords
 };

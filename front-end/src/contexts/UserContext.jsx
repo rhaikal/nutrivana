@@ -16,11 +16,16 @@ export function UserProvider({ children }) {
           const nutritionStatus = await UserModule.getCurrentNutritionStatus();
           const minimumNutritions = await UserModule.getCurrentMinimumNutritions();
           const intakeNutritions = await UserModule.getCurrentIntakeNutritions();
-          
+          const growthRecords = await UserModule.getGrowthRecords();
+
           setUser({
             nutritionStatus,
-            minimumNutritions: minimumNutritions,
-            intakeNutritions
+            minimumNutritions,
+            intakeNutritions,
+            growthRecords: {
+              height: growthRecords.map((record) => record.height),
+              weight: growthRecords.map((record) => record.weight)
+            }
           });
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -46,7 +51,7 @@ export function UserProvider({ children }) {
       intakeNutritions
     }));
   };
-
+  
   return (
     <UserContext.Provider value={{ user, setUser, updateIntakeNutritions, isLoading }}>
       {children}

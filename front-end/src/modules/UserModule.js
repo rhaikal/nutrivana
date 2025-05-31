@@ -19,8 +19,15 @@ const getCurrentIntakeNutritions = () => {
         .catch(handleError);
 }
 
+const getGrowthRecords = () => {
+    return UserService.getGrowthRecords()
+        .then(handleResponse)
+        .catch(handleError);
+}
+
 export default {
     getCurrentNutritionStatus,
     getCurrentMinimumNutritions,
-    getCurrentIntakeNutritions
+    getCurrentIntakeNutritions,
+    getGrowthRecords
 };

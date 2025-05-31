@@ -1,15 +1,5 @@
 import { useContext, useEffect, useRef, useState, useMemo } from "react"
 import { EllipsisHorizontalIcon } from "@heroicons/react/24/solid"
-import {
-  Chart as ChartJS,
-  CategoryScale,  
-  LinearScale,   
-  PointElement,
-  LineElement,   
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js';
 import NutritionIntake from './components/NutritionIntake';
 import NutritionStatus from "./components/NutritionStatus";
 import { FoodItem, FoodList } from "./components/FoodList";
@@ -21,16 +11,6 @@ import { useMediaQuery } from "../../hooks/useMediaQuery";
 import DashboardSection from "./components/DashboardSection";
 import UserContext from "../../contexts/UserContext";
 import FoodModule from "../../modules/FoodModule";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
 
 const Dashboard = () => {
     const { updateIntakeNutritions } = useContext(UserContext);
@@ -45,10 +25,6 @@ const Dashboard = () => {
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [isFoodModalSaved, setIsFoodModalSaved] = useState(false);
     const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
-    const [chartData] = useState({
-        weight: [4.2, 5.1, 6.3, 7.2, 7.8, 8.2, 8.6, 8.9, 9.2, 9.4, 9.7, 10.0],
-        height: [52.3, 55.8, 59.4, 62.1, 64.3, 66.1, 67.8, 69.2, 70.6, 71.9, 73.1, 74.3]
-    });
     const [recommendedFoods, setRecommendedFoods] = useState([]);
     const [eatenFoods, setEatenFoods] = useState([]);
     const [selectedFood, setSelectedFood] = useState({});
@@ -177,8 +153,7 @@ const Dashboard = () => {
 
             <div className={`grid ${bottomSectionLayout} gap-4 px-4 pb-4`}>
                 <DashboardSection title="Growth Chart">
-                    <LineChart 
-                        data={chartData}
+                    <LineChart
                         isLoading={isInitialLoad}
                     />
                 </DashboardSection>
