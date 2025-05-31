@@ -4,7 +4,7 @@ import { UserIcon, KeyIcon } from '@heroicons/react/24/solid';
 import Swal from '../../utils/Swal';
 import Wrapper from './components/Wrapper';
 import AuthModule from '../../modules/AuthModule';
-import FormField from './components/FormField';
+import FormField from '../../components/FormField';
 
 const Login = () => {
   const formik = useFormik({

@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import { Link } from 'react-router-dom';
 import { UserIcon, KeyIcon } from '@heroicons/react/24/solid';
 import Swal from '../../utils/Swal';
 import Wrapper from './components/Wrapper';
 import AuthModule from '../../modules/AuthModule';
-import FormField from './components/FormField';
-import SelectField from './components/SelectField';
-import { Link } from 'react-router-dom';
+import FormField from '../../components/FormField';
+import SelectField from '../../components/SelectField';
 
 const Register = () => {
     const [step, setStep] = useState(0);
