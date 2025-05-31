@@ -60,7 +60,7 @@ const Dashboard = () => {
         <button 
             className="btn btn-primary btn-sm" 
             disabled={isInitialLoad} 
-            onClick={() => foodModal.current.setIsOpen(true)}
+            onClick={() => foodModal.current.open()}
         >
             Add Food
         </button>
@@ -68,7 +68,7 @@ const Dashboard = () => {
     
     const handleClickFoodItem = (selectedItem) => {
         setSelectedFood(selectedItem)
-        detailModal.current.showModal()
+        detailModal.current.open()
     }
 
     const handleClickLogout = () => {
@@ -138,7 +138,7 @@ const Dashboard = () => {
                             <ul
                                 tabIndex={0}
                                 className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-                                <li><a onClick={() => growthModal.current.showModal()}>Record Growth</a></li>
+                                <li><a onClick={() => growthModal.current.open()}>Record Growth</a></li>
                                 <li><a onClick={handleClickLogout}>Log Out</a></li>
                             </ul>
                         </div>

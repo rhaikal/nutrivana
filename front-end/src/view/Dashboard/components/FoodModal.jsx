@@ -17,17 +17,18 @@ const FoodModalComponent = forwardRef(({ onSave = () => {}}, ref) => {
     const [selectedFoods, setSelectedFoods] = useState([]);
     const [visibleCount, setVisibleCount] = useState(5);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
-    const [internalIsOpen, setInternalIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     
     useImperativeHandle(ref, () => ({
-        setIsOpen: (value) => setInternalIsOpen(value)
+        open: () => setIsOpen(true),
+        close: () => setIsOpen(false)
     }));
 
     const resetState = () => {
         setSearchQuery('');
         setSelectedFoods([]);
         setVisibleCount(5);
-        setInternalIsOpen(false);
+        setIsOpen(false);
     };
 
     const filteredFoods = useMemo(() => {
@@ -127,7 +128,7 @@ const FoodModalComponent = forwardRef(({ onSave = () => {}}, ref) => {
     return (
         <Dialog 
             as="div"
-            open={internalIsOpen}
+            open={isOpen}
             onClose={resetState}
             className="relative z-40"
         >
