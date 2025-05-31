@@ -198,7 +198,7 @@ const Dashboard = () => {
                                     <p className="text-base text-neutral-500">Add some foods to your history to get personalized recommendations</p>
                                 </div>                                               
                             :
-                            <FoodList className='py-2'>
+                            <FoodList maxHeight={isDesktop ? 141.5 : null} className='py-2'>
                                 { recommendedFoods.map((recommendedFood) => (
                                     <FoodItem 
                                         food={recommendedFood}
@@ -224,7 +224,7 @@ const Dashboard = () => {
                                     <AddFoodButton />
                                 </div>                            
                             :
-                            <FoodList className='py-2'>
+                            <FoodList maxHeight={isDesktop ? 141.5 : null} className='py-2'>
                                 {eatenFoods.map((eatenFood) => (
                                     <FoodItem
                                         food={eatenFood}
