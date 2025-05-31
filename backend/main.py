@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime, timedelta, timezone, date
 from dateutil.relativedelta import relativedelta
 from typing import Annotated, Literal, List
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, extract, and_
 import numpy as np
 from sklearn.metrics.pairwise import linear_kernel
 
@@ -191,7 +191,36 @@ def get_detail_foods(f_id: int):
 
 @app.get("/track_record")
 def get_track_record(current_user: Annotated[User, Depends(get_current_user)]):
-    return db.query(UserGrowthRecords).filter(UserGrowthRecords.u_id == current_user.id).all()
+    subq = (
+        db.query(
+            func.min(UserGrowthRecords.date).label("min_date"),
+            extract('year', UserGrowthRecords.date).label('year'),
+            extract('month', UserGrowthRecords.date).label('month')
+        )
+        .filter(UserGrowthRecords.u_id == current_user.id)
+        .group_by(
+            extract('year', UserGrowthRecords.date),
+            extract('month', UserGrowthRecords.date)
+        )
+        .subquery()
+    )
+
+    results = (
+        db.query(UserGrowthRecords)
+        .join(
+            subq,
+            and_(
+                extract('year', UserGrowthRecords.date) == subq.c.year,
+                extract('month', UserGrowthRecords.date) == subq.c.month,
+                UserGrowthRecords.date == subq.c.min_date
+            )
+        )
+        .filter(UserGrowthRecords.u_id == current_user.id)
+        .order_by(UserGrowthRecords.date.desc())
+        .all()
+    )
+
+    return results
 
 @app.get("/get_status_nutritions")
 def get_status_nutritions(current_user: Annotated[User, Depends(get_current_user)]):

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey
 from sqlalchemy.dialects.postgresql import ARRAY
-from core.core import Base  # Sesuaikan dengan lokasi yang benar untuk Base jika berbeda
+from core.core import Base
 
 class User(Base):
     __tablename__ = 'users'
@@ -24,7 +24,7 @@ class Food(Base):
     __tablename__ = 'foods'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(255))  # Tambahkan panjang untuk String jika perlu
+    name = Column(String(255))
 
 class UserMinNutritions(Base):
     __tablename__ = 'user_minimum_nutritions'
@@ -32,7 +32,7 @@ class UserMinNutritions(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     u_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     n_id = Column(Integer, ForeignKey('nutritions.id'), nullable=False)
-    value = Column(Float)  # Gunakan Float untuk data numerik dengan desimal
+    value = Column(Float)
 
 class FoodHistories(Base):
     __tablename__ = 'food_histories'
@@ -48,8 +48,8 @@ class FoodBeverages(Base):
         'info': {'is_view': True}
     }
     
-    f_id = Column(Integer, primary_key=True)  # Tambahkan primary_key=True untuk primary key
-    f_name = Column(String(255))  # Tambahkan panjang untuk String jika perlu
+    f_id = Column(Integer, primary_key=True)
+    f_name = Column(String(255))
     i_ids = Column(ARRAY(Integer))
     i_names = Column(ARRAY(String))
     calcium = Column(Float)
