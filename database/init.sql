@@ -72,6 +72,24 @@ CREATE TABLE user_minimum_nutritions (
     UNIQUE (u_id, n_id)
 );
 
+CREATE TABLE user_growth_records (
+    id SERIAL PRIMARY KEY,
+    u_id INT NOT NULL,
+    weight INT,
+    height INT,
+    nutrition_status VARCHAR(50) CHECK (
+        nutrition_status IN (
+            'severely low',
+            'low',
+            'excessive',
+            'possible risk of excessive',
+            'good',
+            'obese'
+        )
+    ),
+    date TIMESTAMP
+);
+
 CREATE OR REPLACE VIEW food_beverages AS
 WITH
     ingredient_agg AS (

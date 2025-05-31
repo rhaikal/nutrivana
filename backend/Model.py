@@ -66,4 +66,13 @@ class Ingredients(Base):
     name = Column(String(255))
 
 
+class UserGrowthRecords(Base):
+    __tablename__ = 'user_growth_records'
+
+    id = Column(Integer, primary_key=True)
+    u_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    weight = Column(Integer)
+    height = Column(Integer)
+    nutrition_status = Column(String(10))
+    date = Column(Date)
 

@@ -10,7 +10,7 @@ from sklearn.metrics.pairwise import linear_kernel
 
 # Local imports
 from core.core import ACCESS_TOKEN_EXPIRE_MINUTES, db, app
-from Model import User, UserMinNutritions, Food, Nutritions, FoodHistories, FoodBeverages
+from Model import User, UserMinNutritions, Food, Nutritions, FoodHistories, FoodBeverages, UserGrowthRecords
 from helper import (
     get_password_hash, create_access_token, calculate_nutrition_status,
     calculate_minimum_nutrition, INGREDIENT_VECTORIZED, NUTRITION_FEATURES, id_to_index, nutrition_mapping
@@ -65,6 +65,13 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> T
 
 @app.post("/register", response_model=Token)
 def register(form_data: RegisterForm):
+    existing_user = db.query(User).filter(User.username == form_data.username).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username sudah digunakan"
+        )
+
     if form_data.password != form_data.confirm_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -88,6 +95,19 @@ def register(form_data: RegisterForm):
         nutrition_status=calculate_nutrition_status(age_months, form_data.gender, form_data.height, form_data.weight),
     )
     db.add(new_user)
+    db.commit()
+
+    user_record_id = (db.query(UserGrowthRecords).order_by(desc(UserGrowthRecords.id)).first().id + 1) if db.query(UserGrowthRecords).count() else 1
+
+    recorder = UserGrowthRecords(
+        id=user_record_id,
+        u_id=user_id,
+        weight=form_data.weight,
+        height=form_data.height,
+        nutrition_status=calculate_nutrition_status(age_months, form_data.gender, form_data.height, form_data.weight),
+        date=date.today(),
+    )
+    db.add(recorder)
     db.commit()
 
     nutrition_data = calculate_minimum_nutrition(age_months, new_user.nutrition_status)
@@ -169,6 +189,10 @@ def get_detail_foods(f_id: int):
     }
     return food
 
+@app.get("/track_record")
+def get_track_record(current_user: Annotated[User, Depends(get_current_user)]):
+    return db.query(UserGrowthRecords).filter(UserGrowthRecords.u_id == current_user.id).all()
+
 @app.get("/get_status_nutritions")
 def get_status_nutritions(current_user: Annotated[User, Depends(get_current_user)]):
     return current_user.nutrition_status
@@ -187,18 +211,25 @@ def get_minimum_nutrition(current_user: Annotated[User, Depends(get_current_user
 def update_user_nutritions(form_data: NutritionUpdateForm, current_user: Annotated[User, Depends(get_current_user)]):
     age_months = relativedelta(datetime.now(), current_user.date_of_birth).years * 12 + \
                  relativedelta(datetime.now(), current_user.date_of_birth).months
-
     current_user.weight = form_data.weight
     current_user.height = form_data.height
     current_user.nutrition_status = calculate_nutrition_status(age_months, current_user.gender, form_data.height, form_data.weight)
     db.commit()
 
+    user_record_id = (db.query(UserGrowthRecords).order_by(desc(UserGrowthRecords.id)).first().id + 1) if db.query(UserGrowthRecords).count() else 1
+    recorder = UserGrowthRecords(
+    id=user_record_id,
+    u_id=current_user.id,
+    weight=form_data.weight,
+    height=form_data.height,
+    nutrition_status=calculate_nutrition_status(age_months, current_user.gender, form_data.height, form_data.weight),
+    date=date.today())
+    db.add(recorder)
+    db.commit()
+
     nutrition_data = calculate_minimum_nutrition(age_months, current_user.nutrition_status)
-
     db.query(UserMinNutritions).filter(UserMinNutritions.u_id == current_user.id).delete()
-
     next_id = lambda: (db.query(UserMinNutritions).order_by(desc(UserMinNutritions.id)).first().id + 1) if db.query(UserMinNutritions).count() else 1
-
     nutrition_objects = [
         UserMinNutritions(
             id=next_id() + i,
