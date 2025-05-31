@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
 from datetime import datetime, timedelta, timezone, date
 from dateutil.relativedelta import relativedelta
-from typing import Annotated, Literal
+from typing import Annotated, Literal, List
 from sqlalchemy import desc, func
 import numpy as np
 from sklearn.metrics.pairwise import linear_kernel
@@ -13,7 +13,7 @@ from core.core import ACCESS_TOKEN_EXPIRE_MINUTES, db, app
 from Model import User, UserMinNutritions, Food, Nutritions, FoodHistories, FoodBeverages
 from helper import (
     get_password_hash, create_access_token, calculate_nutrition_status,
-    calculate_minimum_nutrition, INGREDIENT_VECTORIZED, NUTRITION_FEATURES, id_to_index
+    calculate_minimum_nutrition, INGREDIENT_VECTORIZED, NUTRITION_FEATURES, id_to_index, nutrition_mapping
 )
 from auth import authenticate_user, get_current_user
 
@@ -40,6 +40,9 @@ class NutritionUpdateForm(BaseModel):
 
 class FoodHistoriesForm(BaseModel):
     f_id: int
+
+class FoodHistoriesBulkForm(BaseModel):
+    items: List[FoodHistoriesForm]
 
 # ======================
 # API Endpoints
@@ -88,7 +91,6 @@ async def register(form_data: RegisterForm):
     db.commit()
 
     nutrition_data = calculate_minimum_nutrition(age_months, new_user.nutrition_status)
-    nutrition_mapping = {"calcium": 1, "carbohydrate": 2, "energy": 3, "iron": 4, "protein": 5, "fat": 6}
 
     next_id = lambda: (db.query(UserMinNutritions).order_by(desc(UserMinNutritions.id)).first().id + 1) if db.query(UserMinNutritions).count() else 1
 
@@ -125,7 +127,15 @@ async def get_status_nutritions(current_user: Annotated[User, Depends(get_curren
 
 @app.get("/get_minimum_nutrition")
 async def get_minimum_nutrition(current_user: Annotated[User, Depends(get_current_user)]):
-    return db.query(UserMinNutritions).filter(UserMinNutritions.u_id == current_user.id).all()
+    id_to_nutrition = {v: k for k, v in nutrition_mapping.items()}
+    results = db.query(UserMinNutritions).filter(UserMinNutritions.u_id == current_user.id).all()
+    output = []
+    for row in results:
+        output.append({
+            "name": id_to_nutrition.get(row.id, "unknown"),
+            "value": row.value
+        })
+    return output
 
 @app.put("/users/update_nutritions")
 async def update_nutritions(form_data: NutritionUpdateForm, current_user: Annotated[User, Depends(get_current_user)]):
@@ -138,7 +148,6 @@ async def update_nutritions(form_data: NutritionUpdateForm, current_user: Annota
     db.commit()
 
     nutrition_data = calculate_minimum_nutrition(age_months, current_user.nutrition_status)
-    nutrition_mapping = {"calcium": 1, "carbohydrate": 2, "energy": 3, "iron": 4, "protein": 5, "fat": 6}
 
     db.query(UserMinNutritions).filter(UserMinNutritions.u_id == current_user.id).delete()
 
@@ -158,24 +167,126 @@ async def update_nutritions(form_data: NutritionUpdateForm, current_user: Annota
     return {"status": "success"}
 
 @app.post("/post_food_histories")
-async def post_food_histories(form_data: FoodHistoriesForm, current_user: Annotated[User, Depends(get_current_user)]):
+async def post_food_histories(
+    form_data: FoodHistoriesBulkForm,
+    current_user: Annotated[User, Depends(get_current_user)]
+):
     current_date = date.today()
     last_record = db.query(FoodHistories).order_by(desc(FoodHistories.id)).first()
     next_id = last_record.id + 1 if last_record else 1
 
-    new_food = FoodHistories(id=next_id, f_id=form_data.f_id, u_id=current_user.id, date=current_date)
-    db.add(new_food)
+    new_records = []
+    for i, item in enumerate(form_data.items):
+        new_food = FoodHistories(
+            id=next_id + i,
+            f_id=item.f_id,
+            u_id=current_user.id,
+            date=current_date
+        )
+        new_records.append(new_food)
+
+    db.add_all(new_records)
     db.commit()
 
-    return {"status": "success"}
+    return {"status": "success", "inserted": len(new_records)}
 
+async def get_food_histories_for_user(user_id: int) -> List[FoodHistories]:
+    return db.query(FoodHistories).filter(
+        FoodHistories.u_id == user_id,
+        FoodHistories.date == date.today()
+    ).all()
+
+# Ini endpoint, gunakan dependency injection hanya di sini
 @app.get("/get_food_histories")
 async def get_food_histories(current_user: Annotated[User, Depends(get_current_user)]):
-    return db.query(FoodHistories).filter(FoodHistories.u_id == current_user.id, FoodHistories.date == date.today()).all()
+    return get_food_histories_for_user(current_user.id)
+
+async def get_current_nutrient_residue(current_user: User):
+    food_histories = get_food_histories_for_user(current_user.id)  # list of FoodHistories model objects
+    total_nutrition_consumed = []
+
+    for food_nutrition in food_histories:
+        food_histories_nutrition = db.query(FoodBeverages).filter(
+            FoodBeverages.f_id == food_nutrition.f_id
+        ).first()
+        food_histories_nutrition = {
+            nutrisi: getattr(food_histories_nutrition, nutrisi, 0) or 0
+            for nutrisi in NUTRITION_FEATURES
+        }
+        total_nutrition_consumed.append(food_histories_nutrition)
+
+    aggregated_nutrition = {nutrisi: 0 for nutrisi in NUTRITION_FEATURES}
+    for nutrition in total_nutrition_consumed:
+        for nutrisi, value in nutrition.items():
+            aggregated_nutrition[nutrisi] += value
+
+    rows = (
+        db.query(UserMinNutritions.value, Nutritions.name)
+        .join(Nutritions, UserMinNutritions.n_id == Nutritions.id)
+        .filter(UserMinNutritions.u_id == current_user.id)
+        .all()
+    )
+    min_nutrition_needs = {name.lower(): value for value, name in rows}
+
+    nutrient_residue = {}
+    for nutrisi in NUTRITION_FEATURES:
+        need = min_nutrition_needs.get(nutrisi, 0)
+        consumed = aggregated_nutrition.get(nutrisi, 0)
+        residue = max(0, need - consumed)
+        nutrient_residue[nutrisi] = residue
+
+    return nutrient_residue
+
+async def get_current_nutrient_deficiency_percent(current_user: User):
+    food_histories = get_food_histories_for_user(current_user.id)  # list of FoodHistories model objects
+    total_nutrition_consumed = []
+
+    for food_nutrition in food_histories:
+        food_histories_nutrition = db.query(FoodBeverages).filter(
+            FoodBeverages.f_id == food_nutrition.f_id
+        ).first()
+        food_histories_nutrition = {
+            nutrisi: getattr(food_histories_nutrition, nutrisi, 0) or 0
+            for nutrisi in NUTRITION_FEATURES
+        }
+        total_nutrition_consumed.append(food_histories_nutrition)
+
+    # Total konsumsi saat ini
+    aggregated_nutrition = {nutrisi: 0 for nutrisi in NUTRITION_FEATURES}
+    for nutrition in total_nutrition_consumed:
+        for nutrisi, value in nutrition.items():
+            aggregated_nutrition[nutrisi] += value
+
+    # Ambil kebutuhan minimum user
+    rows = (
+        db.query(UserMinNutritions.value, Nutritions.name)
+        .join(Nutritions, UserMinNutritions.n_id == Nutritions.id)
+        .filter(UserMinNutritions.u_id == current_user.id)
+        .all()
+    )
+    min_nutrition_needs = {name.lower(): value for value, name in rows}
+
+    # Hitung persentase kekurangan nutrisi
+    nutrient_deficiency_percent = {}
+    for nutrisi in NUTRITION_FEATURES:
+        need = min_nutrition_needs.get(nutrisi, 0)
+        consumed = aggregated_nutrition.get(nutrisi, 0)
+        if need > 0:
+            residue = max(0, need - consumed)
+            deficiency_percent = (residue / need) * 100
+            nutrient_deficiency_percent[nutrisi] = round(deficiency_percent, 2)
+        else:
+            nutrient_deficiency_percent[nutrisi] = 0.0  # atau None jika tidak ingin dihitung
+
+    return nutrient_deficiency_percent
 
 @app.get("/food_recommendations")
 async def get_recommendations(current_user: Annotated[User, Depends(get_current_user)]):
-    food_histories = await get_food_histories(current_user)
+    remaining_percent = get_current_nutrient_deficiency_percent(current_user)
+    remaining = get_current_nutrient_residue(current_user)
+
+    # 1. filter makanan yang sudah dimakan
+    food_histories = get_food_histories_for_user(current_user.id)
     food_histories_id = [i.f_id for i in food_histories]
     food_beverages = db.query(FoodBeverages).all()
     food_beverages_id = [i.f_id for i in food_beverages]
@@ -184,12 +295,61 @@ async def get_recommendations(current_user: Annotated[User, Depends(get_current_
     valid_history_idx = [id_to_index[i] for i in food_histories_id if i in id_to_index]
     valid_beverage_idx = [id_to_index[i] for i in filter_foods_id if i in id_to_index]
 
+    # 2. calculate ingredient similarity if there's consumption history
     if not valid_history_idx or not valid_beverage_idx:
         avg_ingredient_similarity = np.zeros(len(valid_beverage_idx))
     else:
         avg_ingredient_similarity = np.mean([
             linear_kernel(INGREDIENT_VECTORIZED[i:i+1], INGREDIENT_VECTORIZED[valid_beverage_idx])[0]
             for i in valid_history_idx
-        ], axis=0).tolist()
+        ], axis=0)
+        avg_ingredient_similarity = avg_ingredient_similarity.tolist()
 
-    return {"recommended_ids": filter_foods_id, "ingredient_similarity": avg_ingredient_similarity}
+    # 3. Find top 3 nutrients with highest remaining needs
+    sorted_remaining = sorted(remaining_percent.items(), key=lambda x: x[1], reverse=True)
+    top_nutrients = [nutrient for nutrient, amount in sorted_remaining[:3] if amount > 0]
+    if not top_nutrients:
+        # fallback: pakai semua nutrisi jika tidak ada kekurangan berarti
+        top_nutrients = list(remaining_percent.keys())
+
+    # 4. calculate nutrition score based on top needed nutrients
+    # Ambil data nutrisi makanan yang tersedia
+    food_nutrition_matrix = []
+    for idx in valid_beverage_idx:
+        food = db.query(FoodBeverages).filter(FoodBeverages.f_id == filter_foods_id[valid_beverage_idx.index(idx)]).first()
+        if not food:
+            food_nutrition_matrix.append([0.0 for _ in top_nutrients])
+        else:
+            food_nutrition_matrix.append([
+                getattr(food, nutrient, 0) or 0 for nutrient in top_nutrients
+            ])
+    food_nutrition_matrix = np.array(food_nutrition_matrix)
+
+    # Hitung skor nutrisi: seberapa besar makanan membantu mengatasi kekurangan
+    max_residue = np.array([remaining[nutrient] for nutrient in top_nutrients]) + 1e-8  # avoid div0
+    nutrition_score = np.sum(np.clip(food_nutrition_matrix, 0, max_residue) / max_residue, axis=1) / len(top_nutrients)
+
+    # 5. Calculate hybrid score (80% nutrition needs, 20% ingredient similarity)
+    # Skala similarity agar max = 1
+    if len(avg_ingredient_similarity) > 0 and np.max(avg_ingredient_similarity) > 0:
+        ingredient_sim_norm = avg_ingredient_similarity / np.max(avg_ingredient_similarity)
+    else:
+        ingredient_sim_norm = np.zeros_like(nutrition_score)
+
+    hybrid_score = 0.8 * nutrition_score + 0.2 * ingredient_sim_norm
+
+    # 6. Return top recommendations (by hybrid score)
+    top_indices = np.argsort(-hybrid_score)  # descending order
+    top_food_ids = [filter_foods_id[i] for i in top_indices]
+
+    # Optionally, limit the number of recommendations (e.g., top 5)
+    n_recommend = min(3, len(top_food_ids))
+    recommended_food_ids = top_food_ids[:n_recommend]
+
+    recomendation_food = (
+        db.query(FoodBeverages)
+        .filter(FoodBeverages.f_id.in_(recommended_food_ids))
+        .all()
+    )
+
+    return recomendation_food
