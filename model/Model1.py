@@ -419,7 +419,7 @@ class NutritionSystem:
         eval_results = self.evaluate_recommendations()
         print("\nEvaluasi Rekomendasi:")
         print(f"- Nutrisi prioritas: {', '.join(eval_results['top_nutrients'])}")
-        print(f"- Presisi@5: {eval_results['precision']*100:.1f}% (relevansi makanan yang direkomendasikan)")
+        print(f"- precision: {eval_results['precision']*100:.1f}% (relevansi makanan yang direkomendasikan)")
         print(f"- recall: {eval_results['recall']*100:.1f}% (cakupan nutrisi prioritas)")
         
         while True:
