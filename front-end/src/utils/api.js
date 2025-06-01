@@ -21,6 +21,7 @@ const handleResponse = (response) => {
 
 const handleError = (error) => {
     const message =
+        error.response?.data?.detail || 
         (error.response?.data?.message) ||
         error.message ||
         error.toString();

@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState } from 'react';
 import UserModule from '../modules/UserModule';
+import { transformGrowthRecordToMonthlyArrays } from '../utils/user';
 
 const UserContext = createContext();
 
@@ -16,14 +17,15 @@ export function UserProvider({ children }) {
           const minimumNutritions = await UserModule.getCurrentMinimumNutritions();
           const intakeNutritions = await UserModule.getCurrentIntakeNutritions();
           const growthRecords = await UserModule.getGrowthRecords();
+          const { height, weight } = transformGrowthRecordToMonthlyArrays(growthRecords); 
 
           setUser({
             nutritionStatus: growthRecords[growthRecords?.length - 1].nutrition_status,
             minimumNutritions,
             intakeNutritions,
             growthRecords: {
-              height: growthRecords.map((record) => record.height),
-              weight: growthRecords.map((record) => record.weight)
+              height,
+              weight
             }
           });
         } catch (error) {
@@ -57,13 +59,15 @@ export function UserProvider({ children }) {
     setIsLoading(true);
     const minimumNutritions = await UserModule.getCurrentMinimumNutritions();
     const growthRecords = await UserModule.getGrowthRecords();
+    const { height, weight } = transformGrowthRecordToMonthlyArrays(growthRecords); 
+
     setUser((prevUser) => ({
       ...prevUser,
       nutritionStatus: growthRecords[growthRecords?.length - 1].nutrition_status,
       minimumNutritions,
       growthRecords: {
-        height: growthRecords.map((record) => record.height),
-        weight: growthRecords.map((record) => record.weight)
+        height,
+        weight
       }
     }));
     setIsLoading(false);

@@ -104,10 +104,10 @@ const Register = () => {
                 AuthModule.register(data).then((response) => {
                     localStorage.setItem('access_token', response.access_token);
                     window.location.reload();
-                }).catch(() => {
+                }).catch((error) => {
                     Swal.fire({
                         title: 'Registration Failed',
-                        text: 'Unable to complete registration. Please try again.',
+                        text: error.message === 'Username sudah digunakan' ? 'Username already exists' : 'Unable to complete registration. Please try again.',
                         icon: 'error',
                     });
                 });
