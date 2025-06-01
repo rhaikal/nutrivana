@@ -31,8 +31,8 @@ const GrowthModalComponent = (props, ref) => {
 
   const formik = useFormik({
     initialValues: {
-      weight: user?.growthRecords?.weight?.[user.growthRecords.weight.length - 1] || '',
-      height: user?.growthRecords?.height?.[user.growthRecords.height.length - 1] || ''
+      weight: user?.growthRecords?.weight?.filter(w => w != null).slice(-1)[0] || '',
+      height: user?.growthRecords?.height?.filter(h => h != null).slice(-1)[0] || ''
     },
     validationSchema: validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
