@@ -74,7 +74,6 @@ const Dashboard = () => {
         return FoodModule.getEatenFoods()
             .then((response) => {
                 response = formatFoodIngredients(response, 'ingredient_names')
-                console.log(response)
                 setEatenFoods(response);
             })
             .catch((error) => {
