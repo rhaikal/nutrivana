@@ -11,6 +11,7 @@ import { useMediaQuery } from "../../hooks/useMediaQuery";
 import DashboardSection from "./components/DashboardSection";
 import UserContext from "../../contexts/UserContext";
 import FoodModule from "../../modules/FoodModule";
+import { formatFoodIngredients } from "../../utils/food";
 
 const Dashboard = () => {
     const { isLoading: isFetchingUsersData, updateIntakeNutritions } = useContext(UserContext);
@@ -72,6 +73,8 @@ const Dashboard = () => {
     const fetchEatenFoods = async () => {
         return FoodModule.getEatenFoods()
             .then((response) => {
+                response = formatFoodIngredients(response, 'ingredient_names')
+                console.log(response)
                 setEatenFoods(response);
             })
             .catch((error) => {
@@ -83,6 +86,7 @@ const Dashboard = () => {
         setIsLoadingRecommendations(true);
         return FoodModule.getRecommendationFoods()
             .then((response) => {
+                response = formatFoodIngredients(response, 'i_names')
                 setRecommendedFoods(response);
             })
             .catch((error) => {

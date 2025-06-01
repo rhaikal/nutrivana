@@ -101,7 +101,7 @@ const DetailModalComponent = ({ food }, ref) => {
                                             <tbody>
                                                 {food?.ingredients?.map((ingredient) => (
                                                     <tr key={ingredient}>
-                                                        <td>{ingredient}</td>
+                                                        <td className='first-letter:uppercase'>{ingredient}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
