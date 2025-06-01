@@ -1,13 +1,12 @@
 import pandas as pd
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import linear_kernel
+from sklearn.metrics.pairwise import linear_kernel, cosine_similarity
 
 class NutritionSystem:
     NUTRITION_FEATURES = ["energy", "protein", "fat", "carbohydrate", "calcium", "iron"]
     
-    def __init__(self):
+    def __init__(self, nutrition_weight=0.8, similarity_weight=0.2):
         """Initialize the system with food database and nutrition rules"""
         self.food_db = self._init_food_database()
         self.nutrition_rules = self._init_nutrition_rules()
@@ -18,6 +17,10 @@ class NutritionSystem:
         # Initialize TF-IDF vectorizer for ingredient similarity
         self.tfidf_vectorizer = TfidfVectorizer(tokenizer=self._tokenize_ingredients)
         self.ingredient_vectors = self._prepare_ingredient_vectors()
+
+        # Configurable weights
+        self.nutrition_weight = nutrition_weight
+        self.similarity_weight = similarity_weight
 
     # --------------------------
     # Initialization Methods
@@ -239,8 +242,8 @@ class NutritionSystem:
         
         # 6. Calculate hybrid score (80% nutrition needs, 20% ingredient similarity)
         filtered_food['hybrid_score'] = (
-            filtered_food['nutrition_score'] * 0.8 + 
-            filtered_food['ingredient_similarity'] * 0.2
+            filtered_food['nutrition_score'] * self.nutrition_weight + 
+            filtered_food['ingredient_similarity'] * self.similarity_weight
         )
         
         # 7. Return top 5 recommendations
@@ -364,8 +367,8 @@ class NutritionSystem:
         
         if not top_nutrients:
             return {
-                "precision@5": 1.0, 
-                "recall@3": 1.0,
+                "precision": 1.0, 
+                "recall": 1.0,
                 "top_nutrients": [],
                 "nutrient_coverage": {}
             }
@@ -383,7 +386,7 @@ class NutritionSystem:
                     nutrient_scores[nutrient] += 1
         
         # Calculate precision and recall
-        # Precision@5: fraction of recommended foods that are relevant to any top nutrient
+        # precision: fraction of recommended foods that are relevant to any top nutrient
         relevant_foods = 0
         for _, food in recommendations.iterrows():
             for nutrient in top_nutrients:
@@ -393,12 +396,12 @@ class NutritionSystem:
         
         precision = relevant_foods / k
         
-        # Recall@3: fraction of top nutrients that are covered by at least one recommended food
+        # recall: fraction of top nutrients that are covered by at least one recommended food
         recall = sum(1 for nutrient in top_nutrients if nutrient_scores[nutrient] > 0) / len(top_nutrients)
         
         return {
-            "precision@5": precision,
-            "recall@3": recall,
+            "precision": precision,
+            "recall": recall,
             "top_nutrients": top_nutrients,
             "nutrient_coverage": nutrient_scores
         }
@@ -416,8 +419,8 @@ class NutritionSystem:
         eval_results = self.evaluate_recommendations()
         print("\nEvaluasi Rekomendasi:")
         print(f"- Nutrisi prioritas: {', '.join(eval_results['top_nutrients'])}")
-        print(f"- Presisi@5: {eval_results['precision@5']*100:.1f}% (relevansi makanan yang direkomendasikan)")
-        print(f"- Recall@3: {eval_results['recall@3']*100:.1f}% (cakupan nutrisi prioritas)")
+        print(f"- Presisi@5: {eval_results['precision']*100:.1f}% (relevansi makanan yang direkomendasikan)")
+        print(f"- recall: {eval_results['recall']*100:.1f}% (cakupan nutrisi prioritas)")
         
         while True:
             try:
@@ -462,17 +465,17 @@ def load_who_zscores(age_months, gender, height_cm):
         # Menentukan file yang akan dibaca berdasarkan usia dan jenis kelamin
     if age_months <= 24:
         if gender.lower() == 'laki-laki':
-            file_path = 'D:/SEMESTER_4/TWS/Project_Kelompok/wfl_boys_0-to-2-years_zscores.xlsx'
+            file_path = 'wfl_boys_0-to-2-years_zscores.xlsx'
             height_col = 'Length'  # Untuk usia 0-2 tahun menggunakan kolom 'Length'
         else:
-            file_path = 'D:/SEMESTER_4/TWS/Project_Kelompok/wfl_girls_0-to-2-years_zscores.xlsx'
+            file_path = 'wfl_girls_0-to-2-years_zscores.xlsx'
             height_col = 'Length'
     else:
         if gender.lower() == 'laki-laki':
-            file_path = 'D:/SEMESTER_4/TWS/Project_Kelompok/wfh_boys_2-to-5-years_zscores.xlsx'
+            file_path = 'wfh_boys_2-to-5-years_zscores.xlsx'
             height_col = 'Height'  # Untuk usia 2-5 tahun menggunakan kolom 'Height'
         else:
-            file_path = 'D:/SEMESTER_4/TWS/Project_Kelompok/wfh_girls_2-to-5-years_zscores.xlsx'
+            file_path = 'wfh_girls_2-to-5-years_zscores.xlsx'
             height_col = 'Height'
 
     # Membaca file Excel
