@@ -27,7 +27,7 @@ const LineChart = ({ isLoading }) => {
     const { user } = useContext(UserContext);
 
     const chartData = {
-        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],     
         datasets: [
             {
                 label: 'Height',
@@ -38,7 +38,7 @@ const LineChart = ({ isLoading }) => {
                 fill: false,
             },
             {
-                label: 'Weight',
+                label: 'Weight', 
                 data: user?.growthRecords?.weight,
                 borderColor: '#CC3399',
                 backgroundColor: '#CC339980',
@@ -59,6 +59,7 @@ const LineChart = ({ isLoading }) => {
                 text: 'Child Growth (Height & Weight)',
             },
         },
+        
     };
 
     return isLoading ? <div className="skeleton h-full" /> : <Line data={chartData} options={options} />;
