@@ -16,6 +16,14 @@ Sebelum menjalankan Nutrivana, pastikan Anda telah menginstal:
 
 ---
 
+## Cara Jalankan Aplikasi
+
+### Jalankan 
+```
+docker compose up -d
+```
+
+---
 ## Cara Akses Aplikasi
 
 ### 1. Frontend
