@@ -459,7 +459,7 @@ def get_recommendations(
 
     if all(val == 0 for val in remaining.values()):
         return {
-            "message": "Tidak ada kekurangan nutrisi berarti, rekomendasi tidak diperlukan.",
+            "message": "User telah memenuhi kebutuhan nutrisi",
             "recommendations": []
         }
 
